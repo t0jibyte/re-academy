@@ -6,7 +6,7 @@ Computer Basics (3D Edition): we got literal 3D visualizers for the CPU and RAM.
 Assembly from Zero: most ASM tutorials are ancient and scary. we fixed that. start from absolute zero knowledge and learn how registers actually move data around.
 C++ Hero Path: from std::cout to memory management. every details covered, no "just trust me bro" moments.
 Live Editor & Challenges: write code directly in the browser. our simulator tells you exactly what's happening without needing a terminal or a compiler installed.
-Premium UI: glassmorphism, smooth animations, and zero-clutter. it's built to look as good as your mechanical keyboard.
+Premium UI: glassmorphism, smooth animations, and zero-clutter.
 # 🛠️ tech stack
 Frontend: Pure HTML5,CSS (with those 3D transforms), and Javascript.
 Simulation Engine: Custom pattern-based execution simulator in 
