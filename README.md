@@ -8,7 +8,7 @@ C++ Hero Path: from std::cout to memory management. every details covered, no "j
 Live Editor & Challenges: write code directly in the browser. our simulator tells you exactly what's happening without needing a terminal or a compiler installed.
 Premium UI: glassmorphism, smooth animations, and zero-clutter. it's built to look as good as your mechanical keyboard.
 # 🛠️ tech stack
-Frontend: Pure HTML5, CSS (with those 3D transforms), and Javascript.
+Frontend: Pure HTML5,CSS (with those 3D transforms), and Javascript.
 Simulation Engine: Custom pattern-based execution simulator in 
 
 shared.js
@@ -18,10 +18,10 @@ clone the repo: git clone <your-repo-link>
 open 
 
 index.html
- in your browser.
+in your browser.
 profit. 📈
 🤝 contributing
-if you found a bug or want to add some more challenges, just open a PR. don't be a stranger, let's make low-level dev actually cool again.
+if you found a bug or want to add some more challenges, just open a PR. don't be a stranger,let's make low-level dev actually cool again.
 
-built with 🧡 for the next gen of hackers. fr fr.
+built with 🧡 for the next gen of hackers.
 
