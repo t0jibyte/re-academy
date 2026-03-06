@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>x86-64 Assembly — Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-top: 0.6rem;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 2rem;
+      align-items: start;
+      padding: 2rem 0;
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 62px;
+      border: 1px solid var(--border);
+      background: var(--bg1);
+      font-family: 'IBM Plex Mono', monospace;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+
+    .toc-header {
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toc-sticky a {
+      display: block;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.67rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc-sticky a:hover {
+      color: var(--orange);
+      border-left-color: var(--orange);
+      background: rgba(224, 144, 96, 0.03);
+    }
+
+    @media (max-width: 800px) {
+      .lesson-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc-sticky {
+        position: static;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link">Basics</a>
+    <a href="c.html" class="nav-link">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link active">ASM</a>
+    <a href="re.html" class="nav-link">RE</a>
+    <a href="bugs.html" class="nav-link">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">Module 04</div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <section class="page-hero">
+        <div class="sec-label">// module 04</div>
+        <h1 class="page-title">x86-64 <span class="accent" style="color:var(--orange)">Assembly</span></h1>
+        <p class="page-desc">Assembly is how you talk directly to the CPU. In this module, we will start from absolute
+          zero. Discover what registers are, how to move data, and how to write your very first Assembly program.</p>
+      </section>
+
+      <div class="lesson-grid">
+        <nav class="toc-sticky">
+          <div class="toc-header">// contents</div>
+          <a href="#asm-intro">What is Assembly?</a>
+          <a href="#asm-regs">CPU Registers</a>
+          <a href="#asm-mov">The mov Instruction</a>
+          <a href="#asm-arith">Basic Math</a>
+          <a href="#asm-stack">The Stack</a>
+          <a href="#asm-syscall">Making Syscalls</a>
+          <a href="#asm-challenges">Beginner Challenges</a>
+        </nav>
+        <div>
+
+          <div class="card reveal" id="asm-intro">
+            <h2 class="sec-title">01 — What is Assembly?</h2>
+            <div class="divider"></div>
+            <p>Computers only understand 1s and 0s (binary machine code). Assembly language is just a human-readable
+              text version of those 1s and 0s.</p>
+            <p>Instead of typing <code>10111000 00000101 00000000 00000000 00000000</code>, you type
+              <code>mov eax, 5</code>. They mean exactly the same thing to the processor. When you compile a C program,
+              the compiler translates your C code into Assembly, and then an <em>assembler</em> translates that into
+              binary.
+            </p>
+          </div>
+
+          <div class="card reveal" id="asm-regs">
+            <h2 class="sec-title">02 — CPU Registers</h2>
+            <div class="divider"></div>
+            <p>If you want to do math quickly, you can't rely on RAM because it's too slow. Instead, the CPU has tiny,
+              ultra-fast storage boxes actually built into the silicon. These are called <strong>registers</strong>.</p>
+            <p>You can think of registers like built-in variables. On a 64-bit CPU, they hold 64 bits (8 bytes) of data.
+              Some of the most common general-purpose registers are:</p>
+            <ul style="margin-bottom:1rem; padding-left:1.5rem; color:var(--text-mid); font-size:0.85rem">
+              <li><strong>RAX</strong>: Often used to hold the result of a function.</li>
+              <li><strong>RBX, RCX, RDX</strong>: Used for general data and calculations.</li>
+              <li><strong>RDI, RSI</strong>: Often used to hold arguments being passed to functions.</li>
+              <li><strong>RIP</strong>: The Instruction Pointer. It points to the next instruction the CPU should run.
+              </li>
+            </ul>
+          </div>
+
+          <div class="card reveal" id="asm-mov">
+            <h2 class="sec-title">03 — The mov Instruction</h2>
+            <div class="divider"></div>
+            <p>The most common instruction you will ever see is <code>mov</code> (short for "move"). It moves data from
+              one place to another. Actually, "copy" is a better word, because the original data doesn't disappear.</p>
+            <p>The syntax we use (Intel syntax) is always <code>mov DESTINATION, SOURCE</code>.</p>
+            <pre class="code-block"><span class="tag">using mov</span><span class="cmt">; Put the number 5 into the RAX register</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">5</span>
+
+<span class="cmt">; Copy the value of RAX into RBX (RBX is now 5)</span>
+<span class="ins">mov</span>  <span class="reg">rbx</span>, <span class="reg">rax</span>
+
+<span class="cmt">; To work with memory, use square brackets [].</span>
+<span class="cmt">; This means "go to the memory address inside RCX, and read the data there into RAX"</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, [<span class="reg">rcx</span>]</pre>
+          </div>
+
+          <div class="card reveal" id="asm-arith">
+            <h2 class="sec-title">04 — Basic Math</h2>
+            <div class="divider"></div>
+            <p>Once you have data in registers, you can do math on it using instructions like <code>add</code> and
+              <code>sub</code>.
+            </p>
+            <pre
+              class="code-block"><span class="tag">arithmetic instructions</span><span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">10</span>     <span class="cmt">; rax = 10</span>
+<span class="ins">add</span>  <span class="reg">rax</span>, <span class="num">5</span>      <span class="cmt">; rax = rax + 5  (now 15)</span>
+<span class="ins">sub</span>  <span class="reg">rax</span>, <span class="num">2</span>      <span class="cmt">; rax = rax - 2  (now 13)</span>
+
+<span class="cmt">; You can also add another register:</span>
+<span class="ins">mov</span>  <span class="reg">rbx</span>, <span class="num">3</span>
+<span class="ins">add</span>  <span class="reg">rax</span>, <span class="reg">rbx</span>     <span class="cmt">; rax = 13 + 3 = 16</span></pre>
+          </div>
+
+          <div class="card reveal" id="asm-stack">
+            <h2 class="sec-title">05 — The Stack</h2>
+            <div class="divider"></div>
+            <p>The CPU has very few registers. If you run out of them, you can store data temporarily in RAM using a
+              structure called <strong>the Stack</strong>.</p>
+            <p>Think of it like a stack of plates. You can push a new plate onto the top of the stack
+              (<code>push</code>), or take the top plate off (<code>pop</code>).</p>
+            <pre class="code-block"><span class="tag">push and pop</span><span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">99</span>
+<span class="ins">push</span> <span class="reg">rax</span>      <span class="cmt">; saves 99 onto the top of the stack</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">0</span>       <span class="cmt">; rax is now overwritten with 0</span>
+
+<span class="cmt">; Later, when we want our 99 back:</span>
+<span class="ins">pop</span>  <span class="reg">rbx</span>      <span class="cmt">; removes top value from stack and places it in rbx</span>
+<span class="cmt">; rbx is now 99!</span></pre>
+          </div>
+
+          <div class="card reveal" id="asm-syscall">
+            <h2 class="sec-title">06 — Syscalls (Hello World)</h2>
+            <div class="divider"></div>
+            <p>Assembly doesn't have <code>printf()</code> or "print to screen" commands. If you want to print something
+              or read a file, you have to ask the Operating System (Linux) to do it for you using a
+              <strong>syscall</strong>.
+            </p>
+            <p>You do this by putting a specific "Phone Number" in the RAX register to tell Linux what service you want,
+              putting the arguments in other registers, and then yelling <code>syscall</code>.</p>
+            <pre class="code-block"><span class="tag">Syscall: write(1, "HI\\n", 3)</span><span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">1</span>          <span class="cmt">; System call ID 1 is "sys_write"</span>
+<span class="ins">mov</span>  <span class="reg">rdi</span>, <span class="num">1</span>          <span class="cmt">; File Descriptor 1 is "stdout" (the terminal screen)</span>
+<span class="ins">lea</span>  <span class="reg">rsi</span>, [<span class="reg">rip</span>+msg]  <span class="cmt">; Memory address of our string</span>
+<span class="ins">mov</span>  <span class="reg">rdx</span>, <span class="num">3</span>          <span class="cmt">; Length of the string ("HI\n" is 3 bytes)</span>
+<span class="ins">syscall</span>              <span class="cmt">; Ask Linux to run it!</span>
+
+<span class="cmt">; Wait, how do we exit safely? Syscall 60!</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, <span class="num">60</span>         <span class="cmt">; System call ID 60 is "sys_exit"</span>
+<span class="ins">mov</span>  <span class="reg">rdi</span>, <span class="num">0</span>          <span class="cmt">; Exit code 0 (success)</span>
+<span class="ins">syscall</span></pre>
+          </div>
+
+          <!-- CHALLENGES -->
+          <div class="card reveal" id="asm-challenges">
+            <h2 class="sec-title">Assembly Challenges — Live Editor</h2>
+            <div class="divider"></div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">These challenges are written in
+              pure Assembly. Use the live editor to verify your understanding.</p>
+
+            <div class="challenge-grid">
+              <div class="ch-card" onclick="selectChallenge(this, asm_ch['a01'].code, asm_ch['a01'].name, 'asm-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>ASM-01: Your First mov</h4>
+                <p>Learn how to put data into registers. The absolute basics of CPU operation.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, asm_ch['a02'].code, asm_ch['a02'].name, 'asm-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>ASM-02: Adding and Subtracting</h4>
+                <p>Perform basic math operations directly on the CPU registers.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, asm_ch['a03'].code, asm_ch['a03'].name, 'asm-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>ASM-03: Pushing and Popping</h4>
+                <p>Use the Stack to store data temporarily when you run out of registers.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, asm_ch['a04'].code, asm_ch['a04'].name, 'asm-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>ASM-04: Hello Syscall</h4>
+                <p>Write a true Hello World by directly asking the Linux kernel to print a string.</p>
+              </div>
+            </div>
+
+            <div class="ide-wrapper">
+              <div class="ide-topbar">
+                <span class="ide-filename" id="asm-ide-name">// select a challenge above</span>
+                <span class="ide-lang-badge">Intel x86-64</span>
+                <span class="ide-right-info">AI execution simulation</span>
+              </div>
+              <div class="ide-body">
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>editor</span></div>
+                  <textarea class="ide-editor" id="asm-ide-editor" spellcheck="false" placeholder="global _start
+
+_start:
+    ; Write your assembly here
+    
+    ; Exit syscall
+    mov rax, 60
+    mov rdi, 0
+    syscall"></textarea>
+                </div>
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>output</span><span id="asm-ide-rt">ready</span></div>
+                  <div class="ide-output" id="asm-ide-output">Select a challenge to start.</div>
+                </div>
+              </div>
+              <div class="ide-footer">
+                <button class="btn-run" id="asm-ide-run" onclick="runCode('asm-ide','asm')">▶ RUN</button>
+                <button class="btn-secondary" onclick="clearIde('asm-ide')">CLEAR</button>
+                <button class="btn-secondary" onclick="explainCode('asm-ide','asm')">EXPLAIN</button>
+                <span class="ide-status" id="asm-ide-status"></span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+      </div><!-- /lesson-grid -->
+    </div>
+    <footer>
+      <span>Low-Level Academy — x86-64 Assembly</span>
+      <span>Next: <a href="re.html" style="color:var(--orange); text-decoration:none;">Reverse Engineering →</a></span>
+    </footer>
+  </div>
+  <script src="shared.js"></script>
+  <script>
+    const asm_ch = {
+      a01: {
+        name: 'ASM-01: Your First mov', code: `global _start\n\n_start:\n    ; TODO: Move the number 42 into the RAX register\n    ; mov ...\n    \n    ; TODO: Move the number 100 into the RBX register\n    ; mov ...\n\n    ; Exit gracefully\n    mov rax, 60\n    mov rdi, 0\n    syscall`
+      },
+
+      a02: {
+        name: 'ASM-02: Adding and Subtracting', code: `global _start\n\n_start:\n    ; Put 15 into RAX\n    mov rax, 15\n    \n    ; TODO: Add 5 to RAX\n    \n    ; TODO: Subtract 2 from RAX\n    \n    ; The result in RAX should be 18.\n\n    ; Exit gracefully\n    mov rax, 60\n    mov rdi, 0\n    syscall`
+      },
+
+      a03: {
+        name: 'ASM-03: Pushing and Popping', code: `global _start\n\n_start:\n    mov rax, 999\n    \n    ; TODO: Push RAX onto the stack\n    \n    mov rax, 0  ; Oh no! We lost our 999!\n\n    ; TODO: Pop the value back from the stack into RBX\n    \n    ; RBX should now contain 999.\n\n    ; Exit gracefully\n    mov rax, 60\n    mov rdi, 0\n    syscall`
+      },
+
+      a04: {
+        name: 'ASM-04: Hello Syscall', code: `global _start\n\nsection .data\n    msg db "Hello, Kernel!", 10\n\nsection .text\n_start:\n    ; TODO: Set up the sys_write syscall (ID 1)\n    ; rax = 1 (sys_write)\n    ; rdi = 1 (stdout)\n    ; rsi = msg (address of string)\n    ; rdx = 15 (length of string)\n    \n    ; TODO: Call the kernel!\n    \n    ; Exit gracefully\n    mov rax, 60\n    mov rdi, 0\n    syscall`
+      }
+    };
+  </script>
+</body>
+
+</html>

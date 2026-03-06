@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Internals — Low-Level Academy</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .page-hero {
+            padding: 4rem 0 2.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-desc {
+            font-size: 0.85rem;
+            color: var(--text-mid);
+            max-width: 560px;
+            line-height: 1.8;
+            margin-top: 0.6rem;
+        }
+
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: 210px 1fr;
+            gap: 2rem;
+            align-items: start;
+            padding: 2rem 0;
+        }
+
+        .toc-sticky {
+            position: sticky;
+            top: 62px;
+            border: 1px solid var(--border);
+            background: var(--bg1);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .toc-header {
+            padding: 0.5rem 0.9rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .toc-sticky a {
+            display: block;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.67rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: all 0.12s;
+        }
+
+        .toc-sticky a:hover {
+            color: var(--purple);
+            border-left-color: var(--purple);
+            background: rgba(176, 148, 232, 0.03);
+        }
+
+        @media (max-width: 800px) {
+            .lesson-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .toc-sticky {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="topnav">
+        <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+        <button class="nav-toggle" aria-label="Menu">☰</button>
+        <a href="basics.html" class="nav-link">Basics</a>
+        <a href="c.html" class="nav-link">C</a>
+        <a href="cpp.html" class="nav-link active">C++</a>
+        <a href="asm.html" class="nav-link">ASM</a>
+        <a href="re.html" class="nav-link">RE</a>
+        <a href="bugs.html" class="nav-link">Bugs</a>
+        <div class="nav-spacer"></div>
+        <div class="nav-badge">Module 03</div>
+    </nav>
+
+    <div class="page">
+        <div class="container">
+            <section class="page-hero">
+                <div class="sec-label">// module 03</div>
+                <h1 class="page-title"><span class="accent" style="color:var(--purple)">C++</span> From Zero</h1>
+                <p class="page-desc">C++ is one of the most powerful and widely used languages in the world. It gives
+                    you
+                    high-level features like classes and vectors, but also gives you low-level access to memory. Here,
+                    we
+                    will learn C++ absolutely from scratch, step by step.</p>
+            </section>
+
+            <div class="lesson-grid">
+                <nav class="toc-sticky">
+                    <div class="toc-header">// contents</div>
+                    <a href="#cpp-hello">01. Hello C++</a>
+                    <a href="#cpp-vars">02. Variables</a>
+                    <a href="#cpp-flow">03. Control Flow</a>
+                    <a href="#cpp-loops">04. Loops</a>
+                    <a href="#cpp-func">05. Functions</a>
+                    <a href="#cpp-vec">06. Vectors</a>
+                    <a href="#cpp-ptr">07. Pointers & Refs</a>
+                    <a href="#cpp-struct">08. Structs & Classes</a>
+                    <a href="#cpp-challenges">09. Challenges</a>
+                </nav>
+                <div>
+
+                    <!-- HELLO C++ -->
+                    <div class="card reveal" id="cpp-hello">
+                        <h2 class="sec-title">01 — Hello C++</h2>
+                        <div class="divider"></div>
+                        <p>Every C++ program starts with the <code>main()</code> function. To print text to the screen,
+                            we use
+                            <code>std::cout</code> (character output) and the <code>&lt;&lt;</code> operator. We must
+                            also include the
+                            <code>&lt;iostream&gt;</code> library at the top of our file to tell the compiler what
+                            <code>cout</code> is.
+                        </p>
+                        <pre class="code-block"><span class="tag">hello.cpp</span><span class="mac">#include &lt;iostream&gt;</span>
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="cmt">// Print text to the console, followed by a new line (endl)</span>
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Hello, World!"</span> &lt;&lt; <span class="typ">std::endl</span>;
+    
+    <span class="cmt">// Return 0 means the program ran successfully</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                        <div class="note tip"><b>// tip</b>You will often see <code>using namespace std;</code> which
+                            allows you to type <code>cout</code> instead of <code>std::cout</code>. However, typing
+                            <code>std::</code> is considered best practice to prevent naming conflicts!
+                        </div>
+                    </div>
+
+                    <!-- VARIABLES & TYPES -->
+                    <div class="card reveal" id="cpp-vars">
+                        <h2 class="sec-title">02 — Variables and Data Types</h2>
+                        <div class="divider"></div>
+                        <p>C++ is <strong>statically typed</strong>, which means you must declare the type of a variable
+                            before you use it, and you cannot change its type later.</p>
+                        <table class="tbl">
+                            <tr>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td class="tp">int</td>
+                                <td>Whole numbers (integers)</td>
+                                <td><code>int age = 25;</code></td>
+                            </tr>
+                            <tr>
+                                <td class="tp">double</td>
+                                <td>Decimal numbers (floating point)</td>
+                                <td><code>double price = 19.99;</code></td>
+                            </tr>
+                            <tr>
+                                <td class="tp">char</td>
+                                <td>Single character (use single quotes)</td>
+                                <td><code>char grade = 'A';</code></td>
+                            </tr>
+                            <tr>
+                                <td class="tp">bool</td>
+                                <td>True or false values</td>
+                                <td><code>bool isGameOver = false;</code></td>
+                            </tr>
+                            <tr>
+                                <td class="tp">std::string</td>
+                                <td>Text (use double quotes, needs &lt;string&gt;)</td>
+                                <td><code>std::string name = "Alice";</code></td>
+                            </tr>
+                        </table>
+                        <pre class="code-block"><span class="tag">variables.cpp</span><span class="mac">#include &lt;iostream&gt;</span>
+<span class="mac">#include &lt;string&gt;</span>
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="typ">int</span> health = <span class="num">100</span>;
+    <span class="typ">std::string</span> playerName = <span class="str">"Hero"</span>;
+    
+    <span class="cmt">// You can chain outputs together!</span>
+    <span class="typ">std::cout</span> &lt;&lt; playerName &lt;&lt; <span class="str">" has "</span> &lt;&lt; health &lt;&lt; <span class="str">" HP."</span> &lt;&lt; <span class="typ">std::endl</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                    </div>
+
+                    <!-- CONTROL FLOW -->
+                    <div class="card reveal" id="cpp-flow">
+                        <h2 class="sec-title">03 — Control Flow (If / Else)</h2>
+                        <div class="divider"></div>
+                        <p>C++ uses <code>if</code>, <code>else if</code>, and <code>else</code> to make decisions. The
+                            conditions must be inside parentheses <code>()</code>, and the code to run goes inside curly
+                            braces <code>{}</code>.</p>
+                        <pre class="code-block"><span class="tag">logic.cpp</span><span class="typ">int</span> score = <span class="num">85</span>;
+
+<span class="kw">if</span> (score &gt;= <span class="num">90</span>) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Grade: A"</span> &lt;&lt; <span class="typ">std::endl</span>;
+} <span class="kw">else if</span> (score &gt;= <span class="num">80</span>) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Grade: B"</span> &lt;&lt; <span class="typ">std::endl</span>;
+} <span class="kw">else</span> {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Grade: C or lower"</span> &lt;&lt; <span class="typ">std::endl</span>;
+}
+
+<span class="cmt">// Logical Operators:</span>
+<span class="cmt">// &amp;&amp;  (AND) - true if BOTH are true</span>
+<span class="cmt">// ||  (OR)  - true if at least ONE is true</span>
+<span class="cmt">// !   (NOT) - flips true to false</span>
+<span class="kw">if</span> (score &gt; <span class="num">0</span> &amp;&amp; score &lt;= <span class="num">100</span>) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Valid score."</span> &lt;&lt; <span class="typ">std::endl</span>;
+}</pre>
+                    </div>
+
+                    <!-- LOOPS -->
+                    <div class="card reveal" id="cpp-loops">
+                        <h2 class="sec-title">04 — Loops (For and While)</h2>
+                        <div class="divider"></div>
+                        <p>Loops allow you to run the same block of code multiple times. A <code>for</code> loop is used
+                            when you know exactly how many times you want to loop. A <code>while</code> loop runs as
+                            long as a condition is true.</p>
+                        <pre class="code-block"><span class="tag">loops.cpp</span><span class="cmt">// 1. The FOR loop</span>
+<span class="cmt">// Structure: for (initialization; condition; update)</span>
+<span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i &lt; <span class="num">5</span>; i++) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Count: "</span> &lt;&lt; i &lt;&lt; <span class="typ">std::endl</span>;
+}
+<span class="cmt">// Output: 0, 1, 2, 3, 4</span>
+
+<span class="cmt">// 2. The WHILE loop</span>
+<span class="typ">int</span> hp = <span class="num">3</span>;
+<span class="kw">while</span> (hp &gt; <span class="num">0</span>) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Taking damage! HP left: "</span> &lt;&lt; hp &lt;&lt; <span class="typ">std::endl</span>;
+    hp--; <span class="cmt">// decrease hp by 1</span>
+}</pre>
+                    </div>
+
+                    <!-- CONSTRUCTORS -->
+                    <div class="card reveal" id="cpp-ctors">
+                        <h2 class="sec-title">03 — Constructors, Destructors, Copy, Move</h2>
+                        <div class="divider"></div>
+                        <pre class="code-block"><span class="tag">C++</span><span class="kw">class</span> <span class="typ">Buffer</span> {
+    <span class="typ">uint8_t</span> *data;
+    <span class="typ">size_t</span>   size;
+
+<span class="kw">public</span>:
+    <span class="cmt">// Constructor — initializer list is faster than assignment in body</span>
+    Buffer(<span class="typ">size_t</span> n) : size(n), data(<span class="kw">new</span> <span class="typ">uint8_t</span>[n]) {
+        <span class="fn">memset</span>(data, <span class="num">0</span>, n);
+    }
+
+    <span class="cmt">// Destructor — runs when object dies (scope exit, delete, exception)</span>
+    ~Buffer() {
+        <span class="kw">delete</span>[] data;   <span class="cmt">// MUST use delete[] for arrays</span>
+        data = <span class="kw">nullptr</span>;
+    }
+
+    <span class="cmt">// Copy constructor — deep copy</span>
+    Buffer(<span class="kw">const</span> Buffer& other) : size(other.size), data(<span class="kw">new</span> <span class="typ">uint8_t</span>[other.size]) {
+        <span class="fn">memcpy</span>(data, other.data, size);
+    }
+
+    <span class="cmt">// Move constructor — steal resources, leave other empty</span>
+    Buffer(Buffer&& other) : size(other.size), data(other.data) {
+        other.data = <span class="kw">nullptr</span>;
+        other.size = <span class="num">0</span>;
+    }
+
+    <span class="cmt">// If you define any of these, define all five (rule of five):</span>
+    <span class="cmt">// constructor, destructor, copy ctor, copy assign, move ctor/assign</span>
+};</pre>
+                    </div>
+
+                    <!-- INHERITANCE -->
+                    <div class="card reveal" id="cpp-inherit">
+                        <h2 class="sec-title">04 — Inheritance & Polymorphism</h2>
+                        <div class="divider"></div>
+                        <pre class="code-block"><span class="tag">C++</span><span class="kw">class</span> <span class="typ">Animal</span> {
+<span class="kw">public</span>:
+    std::string name;
+    Animal(<span class="kw">const</span> std::string& n) : name(n) {}
+    <span class="kw">virtual</span> <span class="typ">void</span> speak() { std::cout << <span class="str">"..."</span>; }
+    <span class="kw">virtual</span> ~Animal() {}   <span class="cmt">// virtual destructor: REQUIRED for polymorphism</span>
+                            <span class="cmt">// without it: deleting Dog through Animal* leaks memory</span>
+};
+
+<span class="kw">class</span> <span class="typ">Dog</span> : <span class="kw">public</span> <span class="typ">Animal</span> {
+<span class="kw">public</span>:
+    Dog(<span class="kw">const</span> std::string& n) : Animal(n) {}
+    <span class="typ">void</span> speak() <span class="kw">override</span> {   <span class="cmt">// override: compiler checks it actually overrides</span>
+        std::cout << name << <span class="str">": Woof!\n"</span>;
+    }
+};
+
+<span class="cmt">// Polymorphism: Animal* can point to Dog, Cat, etc.</span>
+<span class="cmt">// The right speak() is chosen at RUNTIME via vtable</span>
+<span class="typ">void</span> make_speak(<span class="typ">Animal</span> *a) {
+    a->speak();   <span class="cmt">// which speak()? decided at runtime by vtable lookup</span>
+}
+
+Dog d(<span class="str">"Rex"</span>);
+make_speak(&d);   <span class="cmt">// calls Dog::speak — "Rex: Woof!"</span>
+
+<span class="cmt">// Abstract class: cannot be instantiated, forces subclasses to implement</span>
+<span class="kw">class</span> <span class="typ">Shape</span> {
+<span class="kw">public</span>:
+    <span class="kw">virtual</span> <span class="typ">double</span> area() <span class="kw">const</span> = <span class="num">0</span>;   <span class="cmt">// pure virtual — = 0 means no implementation</span>
+    <span class="kw">virtual</span> ~Shape() {}
+};
+<span class="cmt">// Shape s;    // error: cannot instantiate abstract class</span></pre>
+                    </div>
+
+                    <!-- VIRTUAL -->
+                    <div class="card reveal" id="cpp-virtual">
+                        <h2 class="sec-title">05 — How Virtual Dispatch Actually Works</h2>
+                        <div class="divider"></div>
+                        <p>When a class has any virtual method, the compiler adds a hidden <strong>vptr</strong>
+                            (virtual pointer) at <strong>offset 0</strong> of the object. This pointer points to the
+                            class's <strong>vtable</strong> — a read-only array of function pointers in
+                            <code>.rodata</code>. A virtual call is just: load vptr → index into vtable → call.
+                        </p>
+                        <pre class="code-block"><span class="tag">virtual dispatch — step by step</span><span class="cmt">// C++ source:</span>
+Animal *a = <span class="kw">new</span> Dog(<span class="str">"Rex"</span>);
+a->speak();
+
+<span class="cmt">// What the compiler generates (x64 assembly):</span>
+<span class="ins">mov</span>  <span class="reg">rdi</span>, a          <span class="cmt">; rdi = "this" pointer (ptr to Dog object)</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, [<span class="reg">rdi</span>]      <span class="cmt">; load vptr from offset 0 of object</span>
+<span class="ins">mov</span>  <span class="reg">rax</span>, [<span class="reg">rax</span>+<span class="num">8</span>]    <span class="cmt">; load vtable[1] (index 1 = speak, 0 = destructor)</span>
+<span class="ins">call</span> <span class="reg">rax</span>             <span class="cmt">; call through pointer</span>
+
+<span class="cmt">// Dog object in memory:</span>
+<span class="cmt">// [vptr    8B] → Dog's vtable in .rodata</span>
+<span class="cmt">// [name  32B] → std::string (contains "Rex")</span>
+
+<span class="cmt">// Dog's vtable in .rodata:</span>
+<span class="cmt">// vtable_Dog:                 </span>
+<span class="cmt">//   [0] → address of Dog::~Dog()     </span>
+<span class="cmt">//   [8] → address of Dog::speak()    </span>
+
+<span class="cmt">// Exploit: overwrite vptr → redirect ALL virtual calls on that object</span></pre>
+                    </div>
+
+                    <!-- VTABLE DEEP DIVE -->
+                    <div class="card reveal" id="cpp-vtable">
+                        <h2 class="sec-title">06 — vtable Memory Layout — In Detail</h2>
+                        <div class="divider"></div>
+                        <pre class="code-block"><span class="tag">vtable layout in memory</span><span class="cmt">// Class with 2 virtual methods:</span>
+<span class="kw">class</span> <span class="typ">Base</span> {
+<span class="kw">public</span>:
+    <span class="kw">virtual</span> <span class="typ">void</span> foo();   <span class="cmt">// vtable[0]</span>
+    <span class="kw">virtual</span> <span class="typ">void</span> bar();   <span class="cmt">// vtable[1]</span>
+    <span class="kw">virtual</span> ~Base();      <span class="cmt">// vtable[2] and vtable[3] (deleting dtor)</span>
+    <span class="typ">int</span> x;
+};
+
+<span class="cmt">// Base object layout (24 bytes):</span>
+<span class="cmt">// offset 0: vptr  (8 bytes) → &Base::vtable</span>
+<span class="cmt">// offset 8: x     (4 bytes)</span>
+<span class="cmt">// offset 12: pad  (4 bytes)</span>
+
+<span class="cmt">// Base vtable in .rodata:</span>
+<span class="cmt">// [typeinfo pointer]     (used by RTTI/dynamic_cast)</span>
+<span class="cmt">// [Base::~Base dtor]</span>
+<span class="cmt">// [Base::foo]</span>
+<span class="cmt">// [Base::bar]</span>
+
+<span class="cmt">// Derived overrides foo:</span>
+<span class="kw">class</span> <span class="typ">Derived</span> : <span class="kw">public</span> <span class="typ">Base</span> {
+<span class="kw">public</span>:
+    <span class="typ">void</span> foo() <span class="kw">override</span>;   <span class="cmt">// new vtable[1] = &Derived::foo</span>
+    <span class="typ">int</span> y;
+};
+
+<span class="cmt">// Derived vtable in .rodata:</span>
+<span class="cmt">// [typeinfo pointer]     (Derived's typeinfo, different from Base's)</span>
+<span class="cmt">// [Derived::~Derived]</span>
+<span class="cmt">// [Derived::foo]         ← replaced with Derived's version</span>
+<span class="cmt">// [Base::bar]            ← inherited — still points to Base::bar</span>
+
+<span class="cmt">// Read vtable manually in GDB (pwndbg):</span>
+<span class="cmt">// info vtbl obj          — show vtable of object</span>
+<span class="cmt">// x/4gx *(void**)&obj    — read 4 qwords from vtable</span>
+
+<span class="cmt">// Read vtable in C++ code:</span>
+Derived d;
+<span class="typ">void</span>** vptr = *(<span class="typ">void</span>***)&d;
+<span class="fn">printf</span>(<span class="str">"vtable @ %p\n"</span>, vptr);
+<span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i < <span class="num">4</span>; i++)
+    <span class="fn">printf</span>(<span class="str">"  [%d] = %p\n"</span>, i, vptr[i]);</pre>
+                        <div class="note danger"><b>// vtable corruption — a real exploit primitive</b>If you can
+                            <!-- FUNCTIONS -->
+                            <div class="card reveal" id="cpp-func">
+                                <h2 class="sec-title">05 — Functions</h2>
+                                <div class="divider"></div>
+                                <p>Functions allow you to organize code into reusable blocks. They must declare what
+                                    type of data they return (or <code>void</code> if they return nothing), and what
+                                    parameters they accept.</p>
+                                <pre class="code-block"><span class="tag">functions.cpp</span><span class="mac">#include &lt;iostream&gt;</span>
+
+<span class="cmt">// Function definition: returns an int, takes two ints as input</span>
+<span class="typ">int</span> <span class="fn">addNumbers</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {
+    <span class="kw">return</span> a + b;
+}
+
+<span class="cmt">// A void function doesn't return anything</span>
+<span class="typ">void</span> <span class="fn">greet</span>(<span class="typ">std::string</span> name) {
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Hello "</span> &lt;&lt; name &lt;&lt; <span class="str">"!"</span> &lt;&lt; <span class="typ">std::endl</span>;
+}
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="typ">int</span> sum = <span class="fn">addNumbers</span>(<span class="num">5</span>, <span class="num">10</span>);
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"5 + 10 = "</span> &lt;&lt; sum &lt;&lt; <span class="typ">std::endl</span>;
+    
+    <span class="fn">greet</span>(<span class="str">"Alice"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                            </div>
+
+                            <!-- VECTORS -->
+                            <div class="card reveal" id="cpp-vec">
+                                <h2 class="sec-title">06 — Vectors (Smart Arrays)</h2>
+                                <div class="divider"></div>
+                                <p>Unlike raw C arrays, a <code>std::vector</code> can grow and shrink in size
+                                    automatically. It is part of the C++ Standard Template Library (STL). You must
+                                    <code>#include &lt;vector&gt;</code> to use it.
+                                </p>
+                                <pre class="code-block"><span class="tag">vectors.cpp</span><span class="mac">#include &lt;iostream&gt;</span>
+<span class="mac">#include &lt;vector&gt;</span>
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="cmt">// Create a vector of integers</span>
+    <span class="typ">std::vector</span>&lt;<span class="typ">int</span>&gt; scores = {<span class="num">90</span>, <span class="num">85</span>, <span class="num">100</span>};
+    
+    <span class="cmt">// Add a new element to the end</span>
+    scores.<span class="fn">push_back</span>(<span class="num">95</span>);
+    
+    <span class="cmt">// Loop through the vector</span>
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"All scores: "</span>;
+    <span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i &lt; scores.<span class="fn">size</span>(); i++) {
+        <span class="typ">std::cout</span> &lt;&lt; scores[i] &lt;&lt; <span class="str">" "</span>;
+    }
+    <span class="typ">std::cout</span> &lt;&lt; <span class="typ">std::endl</span>;
+    
+    <span class="cmt">// Range-based for loop (easier way to loop!)</span>
+    <span class="kw">for</span> (<span class="typ">int</span> score : scores) {
+        <span class="cmt">// Do something with score</span>
+    }
+    
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                            </div>
+
+                            <!-- POINTERS & REFS -->
+                            <div class="card reveal" id="cpp-ptr">
+                                <h2 class="sec-title">07 — Pointers & References</h2>
+                                <div class="divider"></div>
+                                <p>When you pass a variable to a function, C++ makes a <strong>copy</strong> of it. If
+                                    you want a function to modify the original variable, you must pass it by
+                                    <strong>reference</strong> using <code>&amp;</code>.
+                                </p>
+                                <pre class="code-block"><span class="tag">references.cpp</span><span class="cmt">// This function takes 'a' by reference. It modifies the original!</span>
+<span class="typ">void</span> <span class="fn">levelUp</span>(<span class="typ">int</span>&amp; playerLevel) {
+    playerLevel++;
+}
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="typ">int</span> myLevel = <span class="num">5</span>;
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"Before: "</span> &lt;&lt; myLevel &lt;&lt; <span class="typ">std::endl</span>;
+    
+    <span class="fn">levelUp</span>(myLevel);  <span class="cmt">// Passes the actual variable, not a copy</span>
+    
+    <span class="typ">std::cout</span> &lt;&lt; <span class="str">"After: "</span> &lt;&lt; myLevel &lt;&lt; <span class="typ">std::endl</span>; <span class="cmt">// prints 6</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                                <div class="note info"><b>// what about pointers?</b>Pointers
+                                    (<code>int* ptr = &amp;myLevel;</code>) are the older C-style way to share memory.
+                                    In modern C++, References (<code>int&amp; ref = myLevel;</code>) are vastly
+                                    preferred because they are safer and cannot be null.</div>
+                            </div>
+
+                            <!-- CLASSES -->
+                            <div class="card reveal" id="cpp-struct">
+                                <h2 class="sec-title">08 — Structs & Classes</h2>
+                                <div class="divider"></div>
+                                <p>Classes allow you to bundle data (variables) and behavior (functions) together into
+                                    Objects. This is the core of Object-Oriented Programming (OOP).</p>
+                                <pre class="code-block"><span class="tag">oop.cpp</span><span class="kw">class</span> <span class="typ">Player</span> {
+<span class="kw">private</span>:
+    <span class="cmt">// Private data: cannot be accessed directly from main()</span>
+    <span class="typ">std::string</span> name;
+    <span class="typ">int</span> health;
+
+<span class="kw">public</span>:
+    <span class="cmt">// Constructor: called automatically when object is created</span>
+    <span class="typ">Player</span>(<span class="typ">std::string</span> n, <span class="typ">int</span> h) {
+        name = n;
+        health = h;
+    }
+    
+    <span class="cmt">// Methods (functions inside a class)</span>
+    <span class="typ">void</span> <span class="fn">takeDamage</span>(<span class="typ">int</span> dmg) {
+        health -= dmg;
+        <span class="typ">std::cout</span> &lt;&lt; name &lt;&lt; <span class="str">" took "</span> &lt;&lt; dmg &lt;&lt; <span class="str">" damage!"</span> &lt;&lt; <span class="typ">std::endl</span>;
+    }
+};
+
+<span class="typ">int</span> <span class="fn">main</span>() {
+    <span class="cmt">// Create an object of type Player</span>
+    <span class="typ">Player</span> p1(<span class="str">"Hero"</span>, <span class="num">100</span>);
+    p1.<span class="fn">takeDamage</span>(<span class="num">25</span>); <span class="cmt">// call the object's method</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+                            </div>
+
+                            <!-- CHALLENGES -->
+                            <div class="card reveal" id="cpp-challenges">
+                                <h2 class="sec-title">09 — Coding Challenges</h2>
+                                <div class="divider"></div>
+                                <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">Put what you've
+                                    learned into practice! Write your code in the editor and click RUN to compile and
+                                    test it.</p>
+
+                                <div class="challenge-grid">
+                                    <div class="ch-card"
+                                        onclick="selectChallenge(this, cpp_ch['c01'].code, cpp_ch['c01'].name, 'cpp-ide')">
+                                        <div class="ch-diff diff-easy">Easy</div>
+                                        <h4>CPP-01: Hello Name</h4>
+                                        <p>Fix the code to print "Hello, Bob!" using std::cout and a string variable.
+                                        </p>
+                                    </div>
+                                    <div class="ch-card"
+                                        onclick="selectChallenge(this, cpp_ch['c02'].code, cpp_ch['c02'].name, 'cpp-ide')">
+                                        <div class="ch-diff diff-easy">Easy</div>
+                                        <h4>CPP-02: Counting Loop</h4>
+                                        <p>Write a for loop that prints the numbers 1 through 5, each on a new line.</p>
+                                    </div>
+                                    <div class="ch-card"
+                                        onclick="selectChallenge(this, cpp_ch['c03'].code, cpp_ch['c03'].name, 'cpp-ide')">
+                                        <div class="ch-diff diff-medium">Medium</div>
+                                        <h4>CPP-03: Vector Sum</h4>
+                                        <p>Create a vector, add three numbers to it, and loop through to calculate the
+                                            total sum.</p>
+                                    </div>
+                                    <div class="ch-card"
+                                        onclick="selectChallenge(this, cpp_ch['c04'].code, cpp_ch['c04'].name, 'cpp-ide')">
+                                        <div class="ch-diff diff-medium">Medium</div>
+                                        <h4>CPP-04: Swap Variables</h4>
+                                        <p>Write a swap(int&amp; a, int&amp; b) function that swaps the values of two
+                                            variables using references.</p>
+                                    </div>
+                                </div>
+                                <div class="ide-wrapper">
+                                    <div class="ide-topbar">
+                                        <span class="ide-filename" id="cpp-ide-name">// select a challenge above</span>
+                                        <span class="ide-lang-badge">C++ · g++</span>
+                                        <span class="ide-right-info">AI execution simulation</span>
+                                    </div>
+                                    <div class="ide-body">
+                                        <div class="ide-pane">
+                                            <div class="ide-pane-header"><span>editor</span></div>
+                                            <textarea class="ide-editor" id="cpp-ide-editor" spellcheck="false"
+                                                placeholder="#include &lt;iostream&gt;
+
+int main() {
+    std::cout << &quot;Hello C++!&quot; << std::endl;
+    return 0;
+}"></textarea>
+                                        </div>
+                                        <div class="ide-pane">
+                                            <div class="ide-pane-header"><span>output</span><span
+                                                    id="cpp-ide-rt">ready</span>
+                                            </div>
+                                            <div class="ide-output" id="cpp-ide-output">Select a challenge or write your
+                                                own C++
+                                                code.</div>
+                                        </div>
+                                    </div>
+                                    <div class="ide-footer">
+                                        <button class="btn-run" id="cpp-ide-run" onclick="runCode('cpp-ide','cpp')">▶
+                                            RUN</button>
+                                        <button class="btn-secondary" onclick="clearIde('cpp-ide')">CLEAR</button>
+                                        <button class="btn-secondary"
+                                            onclick="explainCode('cpp-ide','cpp')">EXPLAIN</button>
+                                        <span class="ide-status" id="cpp-ide-status"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <footer>
+                    <span>Low-Level Academy — C++ Internals</span>
+                    <span>Next: <a href="asm.html" style="color:var(--purple); text-decoration:none;">x86-64 Assembly
+                            →</a></span>
+                </footer>
+            </div>
+            <script src="shared.js"></script>
+            <script>
+                const cpp_ch = {
+                    c01: {
+                        name: 'CPP-01: Hello Name', code: `#include <iostream>
+#include <string>
+
+int main() {
+    std::string name = "Bob";
+    
+    // FIX: Print "Hello, Bob!" using std::cout and the name variable
+    
+    return 0;
+}` },
+
+                    c02: {
+                        name: 'CPP-02: Counting Loop', code: `#include <iostream>
+
+int main() {
+    // FIX: Write a for loop to print 1 through 5, each on a new line
+    
+    return 0;
+}` },
+
+                    c03: {
+                        name: 'CPP-03: Vector Sum', code: `#include <iostream>
+#include <vector>
+
+int main() {
+    std::vector<int> numbers = {10, 20, 30};
+    int sum = 0;
+    
+    // FIX: Loop through the vector and add each number to 'sum'
+    
+    std::cout << "Sum is: " << sum << std::endl;
+    return 0;
+}` },
+
+                    c04: {
+                        name: 'CPP-04: Swap Variables', code: `#include <iostream>
+
+// FIX: Write a function called swap_vars that takes two integers by REFERENCE
+// and swaps their values.
+void swap_vars(int& a, int& b) {
+    int temp = a;
+    a = b;
+    b = temp;
+}
+
+int main() {
+    int x = 5;
+    int y = 99;
+    
+    std::cout << "Before swap: x=" << x << " y=" << y << std::endl;
+    swap_vars(x, y);
+    std::cout << "After swap:  x=" << x << " y=" << y << std::endl;
+    
+    return 0;
+}` }
+                };
+            </script>
+</body>
+
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ---- HERO ---- */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 75% 35%, rgba(126, 179, 245, 0.05) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 55% at 15% 65%, rgba(125, 212, 160, 0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 700px;
+    }
+
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-eyebrow span {
+      color: var(--blue);
+    }
+
+    .hero-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: clamp(2.4rem, 5vw, 4.2rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      margin-bottom: 1.2rem;
+      color: var(--text);
+    }
+
+    .hero-title .t1 {
+      color: var(--blue);
+    }
+
+    .hero-title .t2 {
+      color: var(--green);
+    }
+
+    .hero-desc {
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      max-width: 500px;
+      line-height: 1.85;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-terminal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      width: min(560px, 100%);
+      margin-bottom: 2.5rem;
+    }
+
+    .terminal-bar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 0.45rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+
+    .tdots {
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    .tdot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .terminal-body {
+      padding: 1rem 1.2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.77rem;
+      line-height: 2;
+    }
+
+    .t-prompt {
+      color: var(--green);
+    }
+
+    .t-line {
+      color: var(--text-dim);
+    }
+
+    .t-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 13px;
+      background: var(--blue);
+      vertical-align: middle;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.5rem;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 0.1rem;
+    }
+
+    /* ---- MODULE GRID ---- */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+      background: var(--border);
+      margin-top: 1rem;
+    }
+
+    .module-card {
+      background: var(--bg1);
+      padding: 1.6rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      transition: background 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.15s;
+    }
+
+    .module-card:hover {
+      background: var(--bg2);
+    }
+
+    .module-card:hover::after {
+      background: var(--blue);
+    }
+
+    .module-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+    }
+
+    .module-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+
+    .module-desc {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .module-tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.57rem;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    .tag.blue {
+      color: var(--blue);
+      border-color: rgba(126, 179, 245, 0.25);
+    }
+
+    .tag.green {
+      color: var(--green);
+      border-color: rgba(125, 212, 160, 0.25);
+    }
+
+    .tag.purple {
+      color: var(--purple);
+      border-color: rgba(176, 148, 232, 0.25);
+    }
+
+    .tag.orange {
+      color: var(--orange);
+      border-color: rgba(224, 144, 96, 0.25);
+    }
+
+    .tag.red {
+      color: var(--red);
+      border-color: rgba(224, 112, 112, 0.25);
+    }
+
+    .tag.yellow {
+      color: var(--yellow);
+      border-color: rgba(224, 192, 112, 0.25);
+    }
+
+    .module-arrow {
+      margin-top: auto;
+      align-self: flex-end;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      transition: color 0.15s;
+    }
+
+    .module-card:hover .module-arrow {
+      color: var(--blue);
+    }
+
+    /* color accents per card */
+    .module-card:nth-child(1):hover::after {
+      background: var(--green);
+    }
+
+    .module-card:nth-child(2):hover::after {
+      background: var(--blue);
+    }
+
+    .module-card:nth-child(3):hover::after {
+      background: var(--purple);
+    }
+
+    .module-card:nth-child(4):hover::after {
+      background: var(--orange);
+    }
+
+    .module-card:nth-child(5):hover::after {
+      background: var(--red);
+    }
+
+    .module-card:nth-child(6):hover::after {
+      background: var(--yellow);
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link">Basics</a>
+    <a href="c.html" class="nav-link">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link">ASM</a>
+    <a href="re.html" class="nav-link">RE</a>
+    <a href="bugs.html" class="nav-link">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">x86-64 · Linux</div>
+  </nav>
+
+  <div class="page">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-eyebrow">// <span>zero to exploitation</span> — a complete curriculum</div>
+        <h1 class="hero-title">
+          Low-Level<br>
+          <span class="t1">Programming</span><br>
+          <span class="t2">Academy</span>
+        </h1>
+        <p class="hero-desc">
+          Start from how a transistor works. End up writing exploits. Every topic gets its own page with
+          detailed explanations, real code, and a live editor where you solve challenges.
+        </p>
+        <div class="hero-terminal">
+          <div class="terminal-bar">
+            <div class="tdots">
+              <div class="tdot" style="background:#e07070"></div>
+              <div class="tdot" style="background:#e0c070"></div>
+              <div class="tdot" style="background:#7dd4a0"></div>
+            </div>
+            <span>bash — low-level-academy</span>
+          </div>
+          <div class="terminal-body">
+            <div class="t-prompt">$ cat curriculum.txt</div>
+            <div class="t-line">01 Computer Basics — transistors → CPU → OS</div>
+            <div class="t-line">02 C Language — full course, zero to pointers</div>
+            <div class="t-line">03 C++ Internals — classes, vtables, RTTI</div>
+            <div class="t-line">04 x86-64 Assembly — registers, instructions, calling conv</div>
+            <div class="t-line">05 Reverse Engineering — GDB, Ghidra, binary analysis</div>
+            <div class="t-line">06 Bug Classes — BOF, format strings, heap, UAF</div>
+            <div class="t-prompt" style="margin-top:0.3rem">$ <span class="t-cursor"></span></div>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="stat-number">06</div>
+            <div class="stat-label">Modules</div>
+          </div>
+          <div>
+            <div class="stat-number">150+</div>
+            <div class="stat-label">Concepts</div>
+          </div>
+          <div>
+            <div class="stat-number">Live</div>
+            <div class="stat-label">AI Editor</div>
+          </div>
+          <div>
+            <div class="stat-number">40+</div>
+            <div class="stat-label">Challenges</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE GRID -->
+    <section class="section" style="padding-top:0;">
+      <div class="container-wide">
+        <div class="sec-label">// curriculum</div>
+        <h2 class="sec-title">Pick a module to start</h2>
+        <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1.5rem;">
+          Each module is its own page. Read the lessons, then open the live editor and solve the challenges.
+          Every challenge runs through an AI that simulates real compilation and execution.
+        </p>
+
+        <div class="module-grid">
+          <a href="basics.html" class="module-card">
+            <div class="module-num">01</div>
+            <div class="module-title">Computer Basics</div>
+            <div class="module-desc">
+              Start from zero. Transistors, logic gates, binary math, how the CPU works,
+              memory hierarchy, operating systems, processes, virtual memory.
+            </div>
+            <div class="module-tags">
+              <span class="tag green">transistors</span>
+              <span class="tag green">binary</span>
+              <span class="tag green">CPU</span>
+              <span class="tag green">OS</span>
+              <span class="tag green">memory</span>
+            </div>
+            <div class="module-arrow">→ start here</div>
+          </a>
+
+          <a href="c.html" class="module-card">
+            <div class="module-num">02</div>
+            <div class="module-title">C Programming</div>
+            <div class="module-desc">
+              Full C course from scratch. Data types, operators, control flow, loops, functions,
+              arrays, strings, pointers, structs, malloc/free, file I/O. Live challenges.
+            </div>
+            <div class="module-tags">
+              <span class="tag blue">C</span>
+              <span class="tag blue">pointers</span>
+              <span class="tag blue">memory</span>
+              <span class="tag blue">loops</span>
+              <span class="tag blue">structs</span>
+            </div>
+            <div class="module-arrow">→ learn C</div>
+          </a>
+
+          <div class="card course-card">
+            <div class="card-tag">// mod 03</div>
+            <h3 class="card-title">C++ From Zero</h3>
+            <div class="divider"></div>
+            <p class="card-desc">Start from the absolute basics of C++: variables, loops, vectors, and classes.</p>
+            <div class="topic-pills">
+              <span class="pill">std::cout</span>
+              <span class="pill">loops</span>
+              <span class="pill">vectors</span>
+              <span class="pill">classes</span>
+            </div>
+            <a href="cpp.html" class="btn-primary mt-auto">START MODULE</a>
+          </div>
+          <a href="asm.html" class="module-card">
+            <div class="module-num">04</div>
+            <div class="module-title">x86-64 Assembly</div>
+            <div class="module-desc">
+              Registers, instructions, addressing modes, arithmetic, jumps, calling
+              convention, stack frames, syscalls. Read and write real ASM. Live editor.
+            </div>
+            <div class="module-tags">
+              <span class="tag orange">ASM</span>
+              <span class="tag orange">x86-64</span>
+              <span class="tag orange">registers</span>
+              <span class="tag orange">syscalls</span>
+            </div>
+            <div class="module-arrow">→ learn ASM</div>
+          </a>
+
+          <a href="re.html" class="module-card">
+            <div class="module-num">05</div>
+            <div class="module-title">Reverse Engineering</div>
+            <div class="module-desc">
+              Binary analysis workflow. ELF format, GDB, objdump, Ghidra. How to read
+              disassembly and reconstruct source. Compiler optimizations and patterns.
+            </div>
+            <div class="module-tags">
+              <span class="tag red">GDB</span>
+              <span class="tag red">Ghidra</span>
+              <span class="tag red">ELF</span>
+              <span class="tag red">disasm</span>
+            </div>
+            <div class="module-arrow">→ learn RE</div>
+          </a>
+
+          <a href="bugs.html" class="module-card">
+            <div class="module-num">06</div>
+            <div class="module-title">Bug Classes</div>
+            <div class="module-desc">
+              Buffer overflows, format string bugs, heap bugs, use-after-free, integer
+              overflow, off-by-one. Real vulnerable code, real exploits explained step by step.
+            </div>
+            <div class="module-tags">
+              <span class="tag yellow">BOF</span>
+              <span class="tag yellow">format str</span>
+              <span class="tag yellow">UAF</span>
+              <span class="tag yellow">heap</span>
+            </div>
+            <div class="module-arrow">→ learn vulns</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Low-Level Academy — built for learners, not bots</span>
+      <span>x86-64 · GCC · Linux · ELF</span>
+    </footer>
+  </div>
+  <script src="shared.js"></script>
+</body>
+
+</html>

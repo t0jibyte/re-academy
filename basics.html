@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Computer Basics — Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-hero .sec-label {
+      margin-bottom: 0.4rem;
+    }
+
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-top: 0.6rem;
+    }
+
+    .toc-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 62px;
+      border: 1px solid var(--border);
+      background: var(--bg1);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .toc-header {
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toc-sticky a {
+      display: block;
+      padding: 0.32rem 0.9rem;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc-sticky a:hover {
+      color: var(--blue);
+      border-left-color: var(--blue);
+      background: rgba(126, 179, 245, 0.03);
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.7rem;
+      margin: 0.9rem 0;
+    }
+
+    .gate-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 0.7rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+    }
+
+    .gate-name {
+      color: var(--blue);
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      margin-bottom: 0.4rem;
+    }
+
+    .gate-row {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 0.15rem;
+      font-size: 0.68rem;
+    }
+
+    .bit-0 {
+      color: var(--text-dim);
+    }
+
+    .bit-1 {
+      color: var(--green);
+    }
+
+    .cpu-diagram {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      margin: 0.9rem 0;
+      font-size: 0.74rem;
+    }
+
+    .cpu-row {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .cpu-box {
+      border: 1px solid var(--border2);
+      padding: 0.5rem 0.9rem;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .cpu-box .box-label {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+
+    .cpu-box .box-val {
+      color: var(--blue);
+      font-size: 0.72rem;
+    }
+
+    .arrow {
+      color: var(--text-dim);
+      align-self: center;
+    }
+
+    @media (max-width: 800px) {
+      .toc-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc-sticky {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link active">Basics</a>
+    <a href="c.html" class="nav-link">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link">ASM</a>
+    <a href="re.html" class="nav-link">RE</a>
+    <a href="bugs.html" class="nav-link">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">Module 01</div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <section class="page-hero">
+        <div class="sec-label">// module 01</div>
+        <h1 class="page-title">Computer <span class="accent">Basics</span></h1>
+        <p class="page-desc">
+          Everything starts here. If you have no idea how a computer actually works under the hood,
+          this is the right place. We go from transistors all the way up to how your program runs.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <div class="toc-layout" style="padding: 2rem 0;">
+        <nav class="toc-sticky">
+          <div class="toc-header">// contents</div>
+          <a href="#b-transistors">Transistors & Logic</a>
+          <a href="#b-numbers">Number Systems</a>
+          <a href="#b-bits">Bits & Data Sizes</a>
+          <a href="#b-twos">Two's Complement</a>
+          <a href="#b-cpu">CPU Architecture</a>
+          <a href="#b-cycle">Fetch-Decode-Execute</a>
+          <a href="#b-memory">Memory Hierarchy</a>
+          <a href="#b-os">OS & Processes</a>
+          <a href="#b-virtual">Virtual Memory</a>
+          <a href="#b-endian">Endianness</a>
+          <a href="#b-elf">ELF Layout</a>
+        </nav>
+
+        <div>
+
+          <!-- TRANSISTORS -->
+          <div class="card reveal" id="b-transistors">
+            <h2 class="sec-title">Transistors, Logic Gates & Binary</h2>
+            <div class="divider"></div>
+            <p>Every single operation your CPU performs comes down to transistors — tiny electronic switches that are
+              either <strong>ON (1)</strong> or <strong>OFF (0)</strong>. A modern CPU has billions of them. This
+              two-state nature is why all computer data is binary: 1s and 0s.</p>
+            <p>Transistors are grouped into <strong>logic gates</strong> that implement boolean logic. There are three
+              fundamental ones — AND, OR, NOT — and every other circuit can be built from them. XOR is especially
+              important: it's used everywhere from checksums to encryption.</p>
+            <div class="gate-grid">
+              <div class="gate-box">
+                <div class="gate-name">AND</div>
+                <div class="gate-row"><span class="bit-0">0</span>&amp;<span class="bit-0">0</span>=<span
+                    class="bit-0">0</span></div>
+                <div class="gate-row"><span class="bit-0">0</span>&amp;<span class="bit-1">1</span>=<span
+                    class="bit-0">0</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>&amp;<span class="bit-0">0</span>=<span
+                    class="bit-0">0</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>&amp;<span class="bit-1">1</span>=<span
+                    class="bit-1">1</span></div>
+              </div>
+              <div class="gate-box">
+                <div class="gate-name">OR</div>
+                <div class="gate-row"><span class="bit-0">0</span>|<span class="bit-0">0</span>=<span
+                    class="bit-0">0</span></div>
+                <div class="gate-row"><span class="bit-0">0</span>|<span class="bit-1">1</span>=<span
+                    class="bit-1">1</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>|<span class="bit-0">0</span>=<span
+                    class="bit-1">1</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>|<span class="bit-1">1</span>=<span
+                    class="bit-1">1</span></div>
+              </div>
+              <div class="gate-box">
+                <div class="gate-name">NOT</div>
+                <div class="gate-row">~<span class="bit-0">0</span>=<span class="bit-1">1</span></div>
+                <div class="gate-row">~<span class="bit-1">1</span>=<span class="bit-0">0</span></div>
+              </div>
+              <div class="gate-box">
+                <div class="gate-name">XOR</div>
+                <div class="gate-row"><span class="bit-0">0</span>^<span class="bit-0">0</span>=<span
+                    class="bit-0">0</span></div>
+                <div class="gate-row"><span class="bit-0">0</span>^<span class="bit-1">1</span>=<span
+                    class="bit-1">1</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>^<span class="bit-0">0</span>=<span
+                    class="bit-1">1</span></div>
+                <div class="gate-row"><span class="bit-1">1</span>^<span class="bit-1">1</span>=<span
+                    class="bit-0">0</span></div>
+              </div>
+            </div>
+            <pre class="code-block"><span class="tag">building a 1-bit adder from gates</span><span class="cmt">// Adding two 1-bit numbers A and B:</span>
+sum   = A XOR B    <span class="cmt">// the result bit</span>
+carry = A AND B    <span class="cmt">// overflow into next bit</span>
+
+<span class="cmt">// 1+0 = 1: sum=1, carry=0</span>
+<span class="cmt">// 1+1 = 2: sum=0, carry=1  (binary: 10)</span>
+
+<span class="cmt">// Chain 64 of these → 64-bit adder</span>
+<span class="cmt">// Add subtractors, comparators → ALU</span>
+<span class="cmt">// Add registers, control logic → CPU core</span></pre>
+            <p>From gates come adders, multiplexers, flip-flops (1-bit memory cells), registers, and full CPUs. The
+              entire stack — from your C code down to hardware — is just logic gates.</p>
+          </div>
+
+          <!-- NUMBER SYSTEMS -->
+          <div class="card reveal" id="b-numbers">
+            <h2 class="sec-title">Number Systems — Decimal, Binary, Hexadecimal</h2>
+            <div class="divider"></div>
+            <p>You need three number systems. <strong>Decimal (base-10)</strong> is what humans use every day.
+              <strong>Binary (base-2)</strong> is how the CPU actually stores and manipulates values.
+              <strong>Hexadecimal (base-16)</strong> is what you use when reading memory — one hex digit = exactly 4
+              bits, so one byte = two hex digits. Every memory address, opcode, and flag value you see is in hex.
+            </p>
+
+            <div class="converter-box">
+              <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:1rem;">// Live Number Converter</div>
+              <div class="conv-row">
+                <label>Decimal (10)</label>
+                <input type="number" id="conv-dec" placeholder="e.g. 255" oninput="convertNum('dec')">
+              </div>
+              <div class="conv-row">
+                <label>Hex (16)</label>
+                <input type="text" id="conv-hex" placeholder="e.g. ff" oninput="convertNum('hex')">
+              </div>
+              <div class="conv-row">
+                <label>Binary (2)</label>
+                <input type="text" id="conv-bin" placeholder="e.g. 11111111" oninput="convertNum('bin')">
+              </div>
+            </div>
+
+            <div class="note info"><b>// hex values to memorize</b>0x41='A', 0x61='a', 0x30='0', 0x0a=newline,
+              0x00=null, 0xff=-1 (signed) or 255 (unsigned), 0x7f=127, 0x80=-128, 0xdeadbeef=debugging magic constant
+            </div>
+          </div>
+
+          <!-- BITS & DATA SIZES -->
+          <div class="card reveal" id="b-bits">
+            <h2 class="sec-title">Bits, Bytes, and Data Sizes</h2>
+            <div class="divider"></div>
+            <p>All data in memory is a sequence of bytes. The CPU can operate on 8, 16, 32, or 64 bits in a single
+              instruction. Knowing the exact size of every type is critical — a size confusion is often the root cause
+              of security bugs.</p>
+            <table class="tbl">
+              <tr>
+                <th>Name</th>
+                <th>Bits</th>
+                <th>Bytes</th>
+                <th>Unsigned Range</th>
+                <th>Signed Range</th>
+                <th>C Type (exact)</th>
+              </tr>
+              <tr>
+                <td>Byte</td>
+                <td>8</td>
+                <td>1</td>
+                <td class="tg">0 – 255</td>
+                <td>-128 to 127</td>
+                <td class="tp">uint8_t / int8_t</td>
+              </tr>
+              <tr>
+                <td>Word</td>
+                <td>16</td>
+                <td>2</td>
+                <td class="tg">0 – 65,535</td>
+                <td>-32,768 to 32,767</td>
+                <td class="tp">uint16_t / int16_t</td>
+              </tr>
+              <tr>
+                <td>Dword</td>
+                <td>32</td>
+                <td>4</td>
+                <td class="tg">0 – ~4.3 billion</td>
+                <td>-2.1B to 2.1B</td>
+                <td class="tp">uint32_t / int32_t</td>
+              </tr>
+              <tr>
+                <td>Qword</td>
+                <td>64</td>
+                <td>8</td>
+                <td class="tg">0 – ~18.4 quintillion</td>
+                <td>-9.2E18 to 9.2E18</td>
+                <td class="tp">uint64_t / int64_t</td>
+              </tr>
+              <tr>
+                <td>Pointer</td>
+                <td>64</td>
+                <td>8</td>
+                <td class="tg">—</td>
+                <td>—</td>
+                <td class="tp">void* / uintptr_t</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- TWO'S COMPLEMENT -->
+          <div class="card reveal" id="b-twos">
+            <h2 class="sec-title">Two's Complement — How Negative Numbers Work</h2>
+            <div class="divider"></div>
+            <p>Every CPU uses <strong>two's complement</strong> to represent signed integers. The most-significant bit
+              is the sign bit (0=positive, 1=negative). To get the negative of a number: <strong>flip all bits, then add
+                1</strong>. The beauty of two's complement is that addition and subtraction work identically for signed
+              and unsigned numbers — the CPU doesn't need separate hardware.</p>
+            <pre class="code-block"><span class="tag">two's complement — 8-bit examples</span><span class="cmt">// How -5 is stored:</span>
+Step 1: start with +5  →  0000 0101
+Step 2: flip all bits  →  1111 1010
+Step 3: add 1          →  1111 1011  = -5
+
+<span class="cmt">// Verify: 5 + (-5) should equal 0</span>
+  0000 0101   (+5)
++ 1111 1011   (-5)
+-----------
+  0000 0000   (= 0, carry discarded) ✓
+
+<span class="cmt">// Key values in 8-bit signed:</span>
+ 0x7F = 0111 1111 =  127  (max positive)
+ 0x80 = 1000 0000 = -128  (most negative — cannot negate!)
+ 0xFF = 1111 1111 =   -1  (same bits as 255 unsigned)
+ 0x00 = 0000 0000 =    0
+
+<span class="cmt">// Same bits, different interpretation:</span>
+uint8_t a = 0xFF;   <span class="cmt">// a = 255</span>
+ int8_t b = 0xFF;   <span class="cmt">// b = -1    ← same bytes in memory!</span></pre>
+            <div class="note warn"><b>// overflow behavior</b>Unsigned overflow wraps around: 255 + 1 = 0. Signed
+              overflow is technically undefined behavior in C, but in practice wraps too. This is a major source of
+              exploitable bugs.</div>
+          </div>
+
+          <!-- CPU -->
+          <div class="card reveal" id="b-cpu">
+            <h2 class="sec-title">CPU Architecture & Implementation</h2>
+            <div class="divider"></div>
+            <p>A CPU has three main parts: <strong>Registers</strong> (ultra-fast on-chip storage, no RAM needed), the
+              <strong>ALU</strong> (Arithmetic Logic Unit — does all math and logic), and the <strong>Control
+                Unit</strong> (reads instructions and coordinates everything). The most important register is
+              <strong>RIP</strong> (Instruction Pointer) — it always holds the address of the next instruction to run.
+              Controlling RIP is the goal of most exploits.
+            </p>
+
+            <!-- INTERACTIVE CPU/RAM 3D VISUALIZER -->
+            <div class="cpu-stage">
+              <div class="cpu-ctrl">
+                <button class="btn-primary btn-sm" onclick="cpuStep()">STEP CYCLE</button>
+                <div id="cpu-status" class="status-indicator">Idle</div>
+              </div>
+              <div class="cpu-3d-container">
+                <!-- RAM component -->
+                <div class="ram-3d">
+                  <div class="ram-label">RAM (Memory)</div>
+                  <div class="ram-slot" id="ram-100"><span class="addr">0x100</span><span class="val">MOV RAX, 5</span>
+                  </div>
+                  <div class="ram-slot" id="ram-104"><span class="addr">0x104</span><span class="val">ADD RAX, 3</span>
+                  </div>
+                  <div class="ram-slot" id="ram-108"><span class="addr">0x108</span><span class="val">STORE RAX</span>
+                  </div>
+                  <div class="ram-slot" id="ram-10c"><span class="addr">0x10C</span><span class="val">HALT</span></div>
+                  <div class="ram-slot empty" id="ram-200"><span class="addr">0x200</span><span class="val">0x00</span>
+                  </div>
+                </div>
+
+                <!-- Data Bus -->
+                <div class="bus-3d">
+                  <div class="bus-data" id="bus-data">...</div>
+                </div>
+
+                <!-- CPU component -->
+                <div class="cpu-chip-3d">
+                  <div class="chip-label">CPU CORE</div>
+                  <div class="regs-grid">
+                    <div class="reg-box" id="reg-rip"><span class="r-name">RIP</span><span class="r-val">0x100</span>
+                    </div>
+                    <div class="reg-box" id="reg-rax"><span class="r-name">RAX</span><span class="r-val">0</span></div>
+                  </div>
+                  <div class="alu-box" id="cpu-alu">ALU (Idle)</div>
+                  <div class="cu-box" id="cpu-cu">Control Unit</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- FETCH DECODE EXECUTE -->
+            <div id="b-cycle" style="margin-top: 2rem;">
+              <h2 class="sec-title">Fetch–Decode–Execute Cycle</h2>
+              <div class="divider"></div>
+              <p>The CPU runs one loop, billions of times per second. Watch it in action above by clicking <strong>STEP
+                  CYCLE</strong>!</p>
+              <ul class="cycle-list">
+                <li><span class="clk-lbl fetch">FETCH</span> CPU reads instruction from RAM at address in RIP.</li>
+                <li><span class="clk-lbl decode">DECODE</span> Control Unit figures out what `MOV` or `ADD` means.</li>
+                <li><span class="clk-lbl execute">EXECUTE</span> ALU performs math or registers update.</li>
+                <li><span class="clk-lbl write">WRITE</span> Results saved back, RIP advances to next instruction.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- MEMORY HIERARCHY -->
+          <div class="card reveal" id="b-memory">
+            <h2 class="sec-title">Memory Hierarchy — Why Speed Varies</h2>
+            <div class="divider"></div>
+            <p>Not all memory is equal. Faster memory is more expensive, so CPUs use a hierarchy. Understanding this
+              matters for performance and for understanding cache-based side-channel attacks (Spectre, Meltdown).</p>
+            <table class="tbl">
+              <tr>
+                <th>Level</th>
+                <th>Size</th>
+                <th>Access Time</th>
+                <th>Notes</th>
+              </tr>
+              <tr>
+                <td>Registers</td>
+                <td>~16 × 8B</td>
+                <td class="tg">1 cycle</td>
+                <td>On the CPU die, no address needed</td>
+              </tr>
+              <tr>
+                <td>L1 Cache</td>
+                <td>32–64 KB</td>
+                <td class="tg">4 cycles</td>
+                <td>Per-core, split I-cache + D-cache</td>
+              </tr>
+              <tr>
+                <td>L2 Cache</td>
+                <td>256 KB–1 MB</td>
+                <td class="ty">12 cycles</td>
+                <td>Per-core, unified</td>
+              </tr>
+              <tr>
+                <td>L3 Cache</td>
+                <td>4–64 MB</td>
+                <td class="ty">40 cycles</td>
+                <td>Shared between cores</td>
+              </tr>
+              <tr>
+                <td>RAM (DRAM)</td>
+                <td>4–64 GB</td>
+                <td class="tr">~200 cycles</td>
+                <td>Main memory — ASLR randomizes this</td>
+              </tr>
+              <tr>
+                <td>SSD/NVMe</td>
+                <td>TB</td>
+                <td class="tr">~100,000 cycles</td>
+                <td>Persistent storage</td>
+              </tr>
+              <tr>
+                <td>HDD</td>
+                <td>TB</td>
+                <td class="tr">~10 million cycles</td>
+                <td>Slow — avoid in hot paths</td>
+              </tr>
+            </table>
+            <div class="note tip"><b>// cache timing attacks</b>Meltdown and Spectre work by measuring how long memory
+              accesses take. If a cache line is hot (recently accessed), it loads in ~4 cycles. If cold, ~200 cycles. An
+              attacker can infer secret data from these timing differences.</div>
+          </div>
+
+          <!-- OS & PROCESSES -->
+          <div class="card reveal" id="b-os">
+            <h2 class="sec-title">Operating System, Processes & Isolation</h2>
+            <div class="divider"></div>
+            <p>The OS kernel is the layer between your program and the hardware. It manages processes, memory, files,
+              and network. A <strong>process</strong> is an isolated program instance — it has its own memory, file
+              descriptors, and state. Two processes cannot touch each other's memory (normally), because the kernel
+              enforces this via the MMU (Memory Management Unit).</p>
+            <p>When you run <code>./program</code>, the kernel:</p>
+            <pre class="code-block"><span class="tag">what happens when you run a binary</span>1. Opens and reads the ELF file header
+2. Creates a new address space (new set of page tables)
+3. Maps program segments into memory:
+   .text   → readable + executable  (r-x)
+   .rodata → readable only          (r--)
+   .data   → readable + writable    (rw-)
+   .bss    → readable + writable    (rw-, zeroed)
+4. Allocates a stack (grows downward)
+5. Allocates initial heap region
+6. Loads shared libraries (libc.so, etc.)
+7. Sets up environment variables and argv on stack
+8. Transfers control to the entry point (_start)
+9. _start → __libc_start_main → main()
+
+<span class="cmt">// View a process's memory map:</span>
+cat /proc/<span class="num">1234</span>/maps     <span class="cmt"># replace 1234 with actual PID</span>
+<span class="cmt">// Or in GDB/pwndbg: vmmap</span></pre>
+          </div>
+
+          <!-- VIRTUAL MEMORY -->
+          <div class="card reveal" id="b-virtual">
+            <h2 class="sec-title">Virtual Memory — Why Each Process Has Its Own "World"</h2>
+            <div class="divider"></div>
+            <p>Every process thinks it owns all of memory from address 0 to 0x7fffffffffff. But two processes can both
+              have a variable at address <code>0x7fff1234</code> — they hold completely different data. The CPU's MMU
+              translates virtual addresses to physical RAM via <strong>page tables</strong> managed by the kernel.</p>
+            <div class="stack-viz">
+              <div class="stack-row">
+                <div class="stack-addr">0x00000000</div>
+                <div class="stack-content">NULL page — any access causes SIGSEGV</div>
+              </div>
+              <div class="stack-row s-code">
+                <div class="stack-addr">~0x400000</div>
+                <div class="stack-content">.text — program code (r-x). Functions live here.</div>
+              </div>
+              <div class="stack-row s-code">
+                <div class="stack-addr">.rodata</div>
+                <div class="stack-content">.rodata — string literals, const globals (r--)</div>
+              </div>
+              <div class="stack-row s-data">
+                <div class="stack-addr">.data</div>
+                <div class="stack-content">.data — initialized global variables (rw-). GOT is here.</div>
+              </div>
+              <div class="stack-row s-data">
+                <div class="stack-addr">.bss</div>
+                <div class="stack-content">.bss — zero-initialized globals (rw-). Not stored in file.</div>
+              </div>
+              <div class="stack-row s-heap">
+                <div class="stack-addr">heap ↑</div>
+                <div class="stack-content">Heap — malloc/new memory, grows upward toward higher addresses</div>
+              </div>
+              <div class="stack-row">
+                <div class="stack-addr">mmap region</div>
+                <div class="stack-content">Shared libraries (libc.so, ld.so) mapped here by dynamic linker</div>
+              </div>
+              <div class="stack-row s-stack">
+                <div class="stack-addr">stack ↓</div>
+                <div class="stack-content">Stack — local variables, return addresses. Grows DOWNWARD.</div>
+              </div>
+              <div class="stack-row">
+                <div class="stack-addr">0x7fff…</div>
+                <div class="stack-content">Kernel space — not accessible from user code</div>
+              </div>
+            </div>
+            <div class="note info"><b>// ASLR — address space layout randomization</b>The kernel randomizes where
+              segments are loaded each time you run a program. That's why exploit writers need an "info leak" — a way to
+              read a pointer from the process — before they can reliably overwrite return addresses.</div>
+          </div>
+
+          <!-- ENDIANNESS -->
+          <div class="card reveal" id="b-endian">
+            <h2 class="sec-title">Endianness — Byte Order in Memory</h2>
+            <div class="divider"></div>
+            <p><strong>x86/x64 is little-endian</strong>: the least-significant byte of a multi-byte value is stored at
+              the lowest memory address. This feels backwards when reading memory dumps. When writing exploit payloads
+              with 64-bit addresses, you must reverse the byte order.</p>
+            <pre class="code-block"><span class="tag">endianness example</span>Value to store: 0xDEADBEEF (32-bit integer)
+
+Little-endian (x86/x64) — LSB at lowest address:
+  address+0: EF    ← least significant byte
+  address+1: BE
+  address+2: AD
+  address+3: DE    ← most significant byte
+
+Big-endian (network byte order) — MSB at lowest address:
+  address+0: DE
+  address+1: AD
+  address+2: BE
+  address+3: EF
+
+<span class="cmt">// In GDB: x/4xb &var  shows bytes low-to-high</span>
+<span class="cmt">// You see: ef be ad de  — looks "backwards"</span>
+
+<span class="cmt">// pwntools Python helpers:</span>
+p64(0x401196)  → b'\x96\x11\x40\x00\x00\x00\x00\x00'   <span class="cmt"># pack 64-bit LE</span>
+u64(b'\x96\x11\x40\x00\x00\x00\x00\x00') → 0x401196    <span class="cmt"># unpack 64-bit LE</span></pre>
+          </div>
+
+          <!-- ELF -->
+          <div class="card reveal" id="b-elf">
+            <h2 class="sec-title">ELF Binary Format</h2>
+            <div class="divider"></div>
+            <p>On Linux, compiled programs are stored as <strong>ELF</strong> (Executable and Linkable Format) files.
+              The ELF header tells the OS where to load the program and where execution begins. You'll constantly work
+              with ELF files when doing RE.</p>
+            <pre class="code-block"><span class="tag">ELF structure overview</span>ELF Header (64 bytes):
+  Magic:        7f 45 4c 46  ("ELF")
+  Class:        64-bit (2) or 32-bit (1)
+  Endianness:   little (1) or big (2)
+  OS/ABI:       Linux (0)
+  Type:         EXEC=executable, DYN=shared lib/PIE, REL=object file
+  Machine:      x86-64 (0x3E)
+  Entry point:  address of _start()
+  PHoff:        offset to Program Header Table
+  SHoff:        offset to Section Header Table
+
+Program Headers (what the loader needs):
+  LOAD  r-x  offset=0x0000  vaddr=0x400000  size=0x...   ← .text
+  LOAD  rw-  offset=0x...   vaddr=0x601000  size=0x...   ← .data/.bss
+  DYNAMIC                                                  ← shared lib info
+  GNU_STACK  rw-  (NX bit — stack is NOT executable)
+
+<span class="cmt">// Useful commands:</span>
+file ./binary           <span class="cmt"># what kind of ELF?</span>
+readelf -h ./binary     <span class="cmt"># ELF header</span>
+readelf -S ./binary     <span class="cmt"># section headers</span>
+readelf -l ./binary     <span class="cmt"># program headers (loader segments)</span>
+objdump -d ./binary     <span class="cmt"># disassemble</span>
+nm ./binary             <span class="cmt"># symbol table</span>
+strings ./binary        <span class="cmt"># printable strings</span>
+checksec ./binary       <span class="cmt"># show NX/PIE/Canary/RELRO status</span></pre>
+            <div class="note tip"><b>// GOT & PLT — how shared libraries work</b>The Global Offset Table (GOT) is a
+              writable table of addresses for library functions (printf, malloc, etc.). When printf is called for the
+              first time, the PLT stub jumps to the dynamic linker, which resolves the real address and writes it into
+              the GOT. After that, calls go directly. Overwriting GOT entries is a classic exploitation technique.</div>
+          </div>
+
+        </div><!-- /toc content -->
+      </div><!-- /toc layout -->
+    </div><!-- /container -->
+
+    <footer>
+      <span>Low-Level Academy — Computer Basics</span>
+      <span>Next: <a href="c.html" style="color:var(--blue); text-decoration:none;">C Programming →</a></span>
+    </footer>
+  </div>
+  <script src="shared.js"></script>
+</body>
+
+</html>

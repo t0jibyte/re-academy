@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C Programming — Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-top: 0.6rem;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 2rem;
+      align-items: start;
+      padding: 2rem 0;
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 62px;
+      border: 1px solid var(--border);
+      background: var(--bg1);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .toc-header {
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toc-sticky a {
+      display: block;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.67rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc-sticky a:hover {
+      color: var(--blue);
+      border-left-color: var(--blue);
+      background: rgba(126, 179, 245, 0.03);
+    }
+
+    @media (max-width: 800px) {
+      .lesson-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc-sticky {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link">Basics</a>
+    <a href="c.html" class="nav-link active">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link">ASM</a>
+    <a href="re.html" class="nav-link">RE</a>
+    <a href="bugs.html" class="nav-link">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">Module 02</div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <section class="page-hero">
+        <div class="sec-label">// module 02</div>
+        <h1 class="page-title"><span class="accent">C</span> Programming</h1>
+        <p class="page-desc">A complete C course from zero. We cover everything: data types, operators, control flow,
+          loops, functions, arrays, strings, pointers, structs, dynamic memory, and file I/O. Then you write code in the
+          live editor to prove you understand it.</p>
+      </section>
+
+      <div class="lesson-grid">
+        <nav class="toc-sticky">
+          <div class="toc-header">// contents</div>
+          <a href="#c-hello">Hello World</a>
+          <a href="#c-types">Data Types</a>
+          <a href="#c-ops">Operators</a>
+          <a href="#c-flow">Control Flow</a>
+          <a href="#c-loops">Loops</a>
+          <a href="#c-switch">Switch</a>
+          <a href="#c-funcs">Functions</a>
+          <a href="#c-arrays">Arrays</a>
+          <a href="#c-strings">Strings</a>
+          <a href="#c-pointers">Pointers</a>
+          <a href="#c-ptrarith">Pointer Arithmetic</a>
+          <a href="#c-structs">Structs & Unions</a>
+          <a href="#c-heap">Dynamic Memory</a>
+          <a href="#c-fileio">File I/O</a>
+          <a href="#c-challenges">Challenges</a>
+        </nav>
+
+        <div>
+
+          <!-- HELLO WORLD -->
+          <div class="card reveal" id="c-hello">
+            <h2 class="sec-title">01 — Structure of a C Program</h2>
+            <div class="divider"></div>
+            <p>Every C program starts at <code>main()</code>. Before compilation, the <strong>preprocessor</strong> runs
+              and handles <code>#include</code> directives — it literally copies the contents of those header files into
+              your source. Header files contain <em>declarations</em> (function signatures, type definitions) so the
+              compiler knows what functions exist before it sees their definitions.</p>
+            <pre class="code-block"><span class="tag">C</span><span class="mac">#include</span> <span class="str">&lt;stdio.h&gt;</span>    <span class="cmt">// printf, scanf, fgets, puts, fprintf...</span>
+<span class="mac">#include</span> <span class="str">&lt;stdlib.h&gt;</span>   <span class="cmt">// malloc, free, exit, atoi, rand...</span>
+<span class="mac">#include</span> <span class="str">&lt;string.h&gt;</span>   <span class="cmt">// strlen, strcpy, memcpy, memset...</span>
+<span class="mac">#include</span> <span class="str">&lt;stdint.h&gt;</span>   <span class="cmt">// uint8_t, int32_t, uint64_t...</span>
+
+<span class="cmt">// argc = number of arguments, argv = array of argument strings</span>
+<span class="cmt">// argv[0] = program name, argv[1] = first arg, etc.</span>
+<span class="typ">int</span> <span class="fn">main</span>(<span class="typ">int</span> argc, <span class="typ">char</span> *argv[]) {
+    <span class="fn">printf</span>(<span class="str">"Hello, World!\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;   <span class="cmt">// 0 = success. Non-zero = error code.</span>
+}
+
+<span class="cmt">// Compile:  gcc -o hello hello.c   (-Wall -Wextra for warnings)</span>
+<span class="cmt">// Run:      ./hello</span>
+<span class="cmt">// Debug:    gcc -g -o hello hello.c    (keep debug symbols)</span></pre>
+            <p><strong>printf format specifiers</strong> — you use these constantly. Wrong specifier = undefined
+              behavior:</p>
+            <pre
+              class="code-block"><span class="tag">printf format specifiers</span><span class="fn">printf</span>(<span class="str">"%d\n"</span>,  <span class="num">42</span>);           <span class="cmt">// signed decimal:    42</span>
+<span class="fn">printf</span>(<span class="str">"%u\n"</span>,  <span class="num">42u</span>);          <span class="cmt">// unsigned decimal:  42</span>
+<span class="fn">printf</span>(<span class="str">"%x\n"</span>,  <span class="num">255</span>);          <span class="cmt">// hex lowercase:     ff</span>
+<span class="fn">printf</span>(<span class="str">"%X\n"</span>,  <span class="num">255</span>);          <span class="cmt">// hex uppercase:     FF</span>
+<span class="fn">printf</span>(<span class="str">"%08x\n"</span>,<span class="num">255</span>);          <span class="cmt">// zero-padded 8 hex: 000000ff</span>
+<span class="fn">printf</span>(<span class="str">"%#x\n"</span>, <span class="num">255</span>);          <span class="cmt">// with 0x prefix:    0xff</span>
+<span class="fn">printf</span>(<span class="str">"%p\n"</span>,  &x);           <span class="cmt">// pointer:           0x7ffd1234abcd</span>
+<span class="fn">printf</span>(<span class="str">"%s\n"</span>,  <span class="str">"text"</span>);       <span class="cmt">// string (char*):    text</span>
+<span class="fn">printf</span>(<span class="str">"%c\n"</span>,  <span class="str">'A'</span>);          <span class="cmt">// char:              A</span>
+<span class="fn">printf</span>(<span class="str">"%f\n"</span>,  <span class="num">3.14</span>);         <span class="cmt">// float/double:      3.140000</span>
+<span class="fn">printf</span>(<span class="str">"%.2f\n"</span>,<span class="num">3.14159</span>);      <span class="cmt">// 2 decimal places:  3.14</span>
+<span class="fn">printf</span>(<span class="str">"%ld\n"</span>, <span class="num">4000000000L</span>);  <span class="cmt">// long (64-bit):     4000000000</span>
+<span class="fn">printf</span>(<span class="str">"%zu\n"</span>, <span class="kw">sizeof</span>(<span class="typ">int</span>));  <span class="cmt">// size_t:            4</span>
+<span class="fn">printf</span>(<span class="str">"%n"</span>,   &count);        <span class="cmt">// DANGER: writes char count to &count</span></pre>
+          </div>
+
+          <!-- DATA TYPES -->
+          <div class="card reveal" id="c-types">
+            <h2 class="sec-title">02 — Data Types</h2>
+            <div class="divider"></div>
+            <p>C's built-in types (<code>int</code>, <code>long</code>, etc.) have sizes that depend on the platform and
+              compiler. For systems programming, always use <strong>exact-width types</strong> from
+              <code>&lt;stdint.h&gt;</code>.</p>
+            <pre
+              class="code-block"><span class="tag">C — data types</span><span class="cmt">// Exact-width types — same on every platform</span>
+<span class="typ">uint8_t</span>   a = <span class="num">0xFF</span>;            <span class="cmt">// 1 byte, unsigned, 0–255</span>
+<span class="typ"> int8_t</span>   b = <span class="num">-1</span>;              <span class="cmt">// 1 byte, signed, -128–127</span>
+<span class="typ">uint16_t</span>  c = <span class="num">0xBEEF</span>;          <span class="cmt">// 2 bytes, unsigned</span>
+<span class="typ">uint32_t</span>  d = <span class="num">0xDEADBEEF</span>;      <span class="cmt">// 4 bytes, unsigned</span>
+<span class="typ"> int32_t</span>  e = <span class="num">-1</span>;              <span class="cmt">// 4 bytes, signed</span>
+<span class="typ">uint64_t</span>  f = <span class="num">0xCAFEBABEL</span>;     <span class="cmt">// 8 bytes, unsigned</span>
+<span class="typ"> int64_t</span>  g = <span class="num">-1</span>;              <span class="cmt">// 8 bytes, signed</span>
+
+<span class="cmt">// Special types</span>
+<span class="typ">size_t</span>    s;    <span class="cmt">// pointer-sized unsigned — use for array lengths/sizes</span>
+<span class="typ">ssize_t</span>   ss;   <span class="cmt">// signed version of size_t</span>
+<span class="typ">uintptr_t</span> u;    <span class="cmt">// integer big enough to hold any pointer value</span>
+<span class="typ">ptrdiff_t</span> p;    <span class="cmt">// result of subtracting two pointers</span>
+
+<span class="cmt">// sizeof: compile-time operator, returns size in bytes</span>
+<span class="fn">printf</span>(<span class="str">"int=%zu, long=%zu, void*=%zu\n"</span>,
+    <span class="kw">sizeof</span>(<span class="typ">int</span>),   <span class="cmt">// 4 on x64 Linux</span>
+    <span class="kw">sizeof</span>(<span class="typ">long</span>),  <span class="cmt">// 8 on x64 Linux (4 on Windows!)</span>
+    <span class="kw">sizeof</span>(<span class="typ">void</span>*) <span class="cmt">// 8 on x64</span>
+);
+
+<span class="cmt">// Character literals are just integers</span>
+<span class="typ">char</span> x = <span class="str">'A'</span>;       <span class="cmt">// x = 65 (ASCII)</span>
+<span class="typ">char</span> y = <span class="str">'\n'</span>;      <span class="cmt">// y = 10 (newline)</span>
+<span class="typ">char</span> z = <span class="str">'\x41'</span>;    <span class="cmt">// z = 65 = 'A'</span>
+
+<span class="cmt">// Float internals (useful for RE)</span>
+<span class="kw">union</span> { <span class="typ">float</span> f; <span class="typ">uint32_t</span> u; } v;
+v.f = <span class="num">1.0f</span>;
+<span class="fn">printf</span>(<span class="str">"1.0f = 0x%08X\n"</span>, v.u);  <span class="cmt">// 0x3F800000 — IEEE 754</span></pre>
+          </div>
+
+          <!-- OPERATORS -->
+          <div class="card reveal" id="c-ops">
+            <h2 class="sec-title">03 — Operators & Bitwise Operations</h2>
+            <div class="divider"></div>
+            <p>Bitwise operations are everywhere in low-level code — crypto, protocols, flags, obfuscation. Know them
+              cold.</p>
+            <pre class="code-block"><span class="tag">C — operators</span><span class="cmt">// Arithmetic</span>
+a + b;  a - b;  a * b;  a / b;  a % b;
+a++;    a--;    ++a;    --a;    -a;
+
+<span class="cmt">// Bitwise — operate on individual bits, not truth values</span>
+a & b;   <span class="cmt">// AND:       1 only where both bits are 1</span>
+a | b;   <span class="cmt">// OR:        1 where either bit is 1</span>
+a ^ b;   <span class="cmt">// XOR:       1 where bits differ</span>
+~a;      <span class="cmt">// NOT:       flip every bit</span>
+a << n;  <span class="cmt">// shift left n bits  = multiply by 2^n</span>
+a >> n;  <span class="cmt">// shift right n bits = divide by 2^n (unsigned)</span>
+
+<span class="cmt">// Common bitwise patterns you'll see everywhere:</span>
+x & <span class="num">0xFF</span>          <span class="cmt">// extract low byte</span>
+(x >> <span class="num">8</span>) & <span class="num">0xFF</span>   <span class="cmt">// extract second byte</span>
+x |  (<span class="num">1</span> << n)     <span class="cmt">// set bit n</span>
+x & ~(<span class="num">1</span> << n)    <span class="cmt">// clear bit n</span>
+x ^  (<span class="num">1</span> << n)     <span class="cmt">// toggle bit n</span>
+(x >> n) & <span class="num">1</span>     <span class="cmt">// test bit n (returns 0 or 1)</span>
+x & (x - <span class="num">1</span>)       <span class="cmt">// clear lowest set bit</span>
+x ^ x              <span class="cmt">// always 0 (compiler uses this to zero registers)</span>
+~<span class="num">0</span>                 <span class="cmt">// all bits set = max unsigned = -1 signed</span>
+
+<span class="cmt">// Logical — work on truth values (0 or non-zero), short-circuit</span>
+a && b;  <span class="cmt">// logical AND — b not evaluated if a is false</span>
+a || b;  <span class="cmt">// logical OR  — b not evaluated if a is true</span>
+!a;      <span class="cmt">// logical NOT — 0→1, non-zero→0</span>
+
+<span class="cmt">// Comparison — return 0 or 1</span>
+a == b;  a != b;  a < b;  a > b;  a <= b;  a >= b;</pre>
+            <div class="note warn"><b>// & vs && — a very common mistake</b><code>&</code> is bitwise AND, evaluates
+              both sides. <code>&&</code> is logical AND, short-circuits. Writing <code>if (ptr & ptr->next)</code> does
+              a bitwise AND of two addresses instead of checking both are non-null.</div>
+          </div>
+
+          <!-- CONTROL FLOW -->
+          <div class="card reveal" id="c-flow">
+            <h2 class="sec-title">04 — Control Flow — if / else / ternary</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">C — if/else</span><span class="kw">if</span> (x > <span class="num">0</span>) {
+    <span class="fn">printf</span>(<span class="str">"positive\n"</span>);
+} <span class="kw">else if</span> (x < <span class="num">0</span>) {
+    <span class="fn">printf</span>(<span class="str">"negative\n"</span>);
+} <span class="kw">else</span> {
+    <span class="fn">printf</span>(<span class="str">"zero\n"</span>);
+}
+
+<span class="cmt">// Ternary: condition ? value_if_true : value_if_false</span>
+<span class="typ">int</span> abs_val = (x >= <span class="num">0</span>) ? x : -x;
+
+<span class="cmt">// What this looks like in assembly (x86-64):</span>
+<span class="ins">cmp</span>  <span class="reg">eax</span>, <span class="num">0</span>      <span class="cmt">; compare x to 0, sets ZF/SF flags</span>
+<span class="ins">jle</span>  .else      <span class="cmt">; if x <= 0, jump to else block</span>
+<span class="cmt">; ... (positive branch) ...</span>
+<span class="ins">jmp</span>  .end
+<span class="lbl">.else:</span>
+<span class="cmt">; ... (else branch) ...</span>
+<span class="lbl">.end:</span></pre>
+          </div>
+
+          <!-- LOOPS -->
+          <div class="card reveal" id="c-loops">
+            <h2 class="sec-title">05 — Loops — for, while, do-while</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">C — for loop</span><span class="cmt">// for(init; condition; update) — most common</span>
+<span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i < <span class="num">10</span>; i++) {
+    <span class="fn">printf</span>(<span class="str">"%d "</span>, i);   <span class="cmt">// prints: 0 1 2 3 4 5 6 7 8 9</span>
+}
+
+<span class="cmt">// Iterate over array — ALWAYS use sizeof(arr)/sizeof(arr[0]) for length</span>
+<span class="typ">int</span> arr[] = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>};
+<span class="typ">size_t</span> len = <span class="kw">sizeof</span>(arr) / <span class="kw">sizeof</span>(arr[<span class="num">0</span>]);   <span class="cmt">// = 5</span>
+<span class="kw">for</span> (<span class="typ">size_t</span> i = <span class="num">0</span>; i < len; i++) {
+    <span class="fn">printf</span>(<span class="str">"arr[%zu] = %d\n"</span>, i, arr[i]);
+}
+
+<span class="cmt">// Nested loops — O(n²), common for 2D arrays, string ops</span>
+<span class="kw">for</span> (<span class="typ">int</span> row = <span class="num">0</span>; row < <span class="num">3</span>; row++) {
+    <span class="kw">for</span> (<span class="typ">int</span> col = <span class="num">0</span>; col < <span class="num">3</span>; col++) {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, row * <span class="num">3</span> + col);
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cmt">// What a for loop looks like in assembly:</span>
+<span class="ins">mov</span>  <span class="reg">ecx</span>, <span class="num">0</span>        <span class="cmt">; i = 0</span>
+<span class="lbl">.loop:</span>
+<span class="ins">cmp</span>  <span class="reg">ecx</span>, <span class="num">10</span>       <span class="cmt">; i < 10?</span>
+<span class="ins">jge</span>  <span class="lbl">.done</span>         <span class="cmt">; if not, exit loop</span>
+<span class="cmt">; ... loop body ...</span>
+<span class="ins">inc</span>  <span class="reg">ecx</span>           <span class="cmt">; i++</span>
+<span class="ins">jmp</span>  <span class="lbl">.loop</span>         <span class="cmt">; back to top</span>
+<span class="lbl">.done:</span></pre>
+            <pre class="code-block"><span class="tag">C — while &amp; do-while</span><span class="cmt">// while: check condition BEFORE each iteration</span>
+<span class="typ">int</span> n = <span class="num">1</span>;
+<span class="kw">while</span> (n <= <span class="num">100</span>) {
+    sum += n;
+    n++;
+}
+
+<span class="cmt">// do-while: always executes body at least once</span>
+<span class="typ">int</span> x;
+<span class="kw">do</span> {
+    <span class="fn">printf</span>(<span class="str">"Enter positive: "</span>);
+    <span class="fn">scanf</span>(<span class="str">"%d"</span>, &x);
+} <span class="kw">while</span> (x <= <span class="num">0</span>);
+
+<span class="cmt">// break exits the innermost loop</span>
+<span class="cmt">// continue skips the rest of the body and goes to next iteration</span>
+<span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">0</span>; i < <span class="num">10</span>; i++) {
+    <span class="kw">if</span> (i == <span class="num">7</span>) <span class="kw">break</span>;       <span class="cmt">// stop at 7</span>
+    <span class="kw">if</span> (i % <span class="num">2</span> == <span class="num">0</span>) <span class="kw">continue</span>; <span class="cmt">// skip even</span>
+    <span class="fn">printf</span>(<span class="str">"%d\n"</span>, i);          <span class="cmt">// prints: 1 3 5</span>
+}</pre>
+          </div>
+
+          <!-- SWITCH -->
+          <div class="card reveal" id="c-switch">
+            <h2 class="sec-title">06 — switch Statement</h2>
+            <div class="divider"></div>
+            <pre
+              class="code-block"><span class="tag">C — switch</span><span class="cmt">// switch compares one value against compile-time constants</span>
+<span class="cmt">// Compiles to a jump table — O(1) regardless of case count</span>
+<span class="kw">switch</span> (choice) {
+    <span class="kw">case</span> <span class="num">1</span>:
+        <span class="fn">puts</span>(<span class="str">"one"</span>);
+        <span class="kw">break</span>;    <span class="cmt">// WITHOUT break: falls through to next case</span>
+    <span class="kw">case</span> <span class="num">2</span>:
+        <span class="fn">puts</span>(<span class="str">"two"</span>);
+        <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="num">3</span>:
+    <span class="kw">case</span> <span class="num">4</span>:     <span class="cmt">// intentional fallthrough: 3 and 4 share same code</span>
+        <span class="fn">puts</span>(<span class="str">"three or four"</span>);
+        <span class="kw">break</span>;
+    <span class="kw">default</span>:
+        <span class="fn">puts</span>(<span class="str">"something else"</span>);
+}
+
+<span class="cmt">// Jump table in assembly — this is how switch is compiled:</span>
+<span class="ins">lea</span>  <span class="reg">rax</span>, [<span class="reg">rip</span>+.Ljmptbl]  <span class="cmt">; load table address</span>
+<span class="ins">jmp</span>  [<span class="reg">rax</span>+<span class="reg">rcx</span>*<span class="num">8</span>]          <span class="cmt">; jump to table[choice]</span></pre>
+          </div>
+
+          <!-- FUNCTIONS -->
+          <div class="card reveal" id="c-funcs">
+            <h2 class="sec-title">07 — Functions, Scope, and Recursion</h2>
+            <div class="divider"></div>
+            <pre
+              class="code-block"><span class="tag">C — functions</span><span class="cmt">// Prototype (declaration) — usually in a .h file</span>
+<span class="typ">int</span> <span class="fn">add</span>(<span class="typ">int</span> a, <span class="typ">int</span> b);
+
+<span class="cmt">// Definition — actual code</span>
+<span class="typ">int</span> <span class="fn">add</span>(<span class="typ">int</span> a, <span class="typ">int</span> b) {
+    <span class="kw">return</span> a + b;    <span class="cmt">// return value goes into RAX register</span>
+}
+
+<span class="cmt">// x64 Linux calling convention (System V ABI):</span>
+<span class="cmt">// args 1–6 → RDI, RSI, RDX, RCX, R8, R9</span>
+<span class="cmt">// args 7+  → pushed on the stack</span>
+<span class="cmt">// return   → RAX (integer) or XMM0 (float)</span>
+<span class="cmt">// caller saves: RAX, RCX, RDX, RSI, RDI, R8-R11</span>
+<span class="cmt">// callee saves: RBX, RBP, R12-R15 (must restore before returning)</span>
+
+<span class="cmt">// Static local: persists between calls, stored in .data not stack</span>
+<span class="typ">void</span> <span class="fn">counter</span>() {
+    <span class="kw">static</span> <span class="typ">int</span> count = <span class="num">0</span>;
+    count++;
+    <span class="fn">printf</span>(<span class="str">"called %d times\n"</span>, count);
+}
+
+<span class="cmt">// Recursion: function calls itself</span>
+<span class="typ">int</span> <span class="fn">factorial</span>(<span class="typ">int</span> n) {
+    <span class="kw">if</span> (n <= <span class="num">1</span>) <span class="kw">return</span> <span class="num">1</span>;      <span class="cmt">// base case — required to stop</span>
+    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - <span class="num">1</span>);
+}
+<span class="cmt">// Each recursive call = new stack frame. Too deep → stack overflow.</span>
+
+<span class="cmt">// Function pointers — calling through a pointer (same as vtable dispatch)</span>
+<span class="typ">int</span> (*fp)(<span class="typ">int</span>, <span class="typ">int</span>) = &add;   <span class="cmt">// fp = address of add()</span>
+<span class="typ">int</span> result = fp(<span class="num">3</span>, <span class="num">4</span>);         <span class="cmt">// call through pointer: call [fp] in ASM</span></pre>
+          </div>
+
+          <!-- ARRAYS -->
+          <div class="card reveal" id="c-arrays">
+            <h2 class="sec-title">08 — Arrays</h2>
+            <div class="divider"></div>
+            <pre
+              class="code-block"><span class="tag">C — arrays</span><span class="typ">int</span> arr[<span class="num">5</span>];                          <span class="cmt">// uninitialized — contains garbage</span>
+<span class="typ">int</span> arr2[] = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>};  <span class="cmt">// size inferred = 5</span>
+<span class="typ">int</span> arr3[<span class="num">5</span>] = {<span class="num">0</span>};                  <span class="cmt">// ALL zeros</span>
+
+arr2[<span class="num">0</span>] = <span class="num">10</span>;    <span class="cmt">// first element (0-indexed)</span>
+arr2[<span class="num">4</span>] = <span class="num">50</span>;    <span class="cmt">// last element</span>
+arr2[<span class="num">5</span>];          <span class="cmt">// UNDEFINED BEHAVIOR — out of bounds, no error!</span>
+
+<span class="cmt">// Array length (only works locally, not after passing to a function)</span>
+<span class="typ">size_t</span> len = <span class="kw">sizeof</span>(arr2) / <span class="kw">sizeof</span>(arr2[<span class="num">0</span>]);   <span class="cmt">// = 5</span>
+
+<span class="cmt">// Array DECAYS to a pointer when passed to a function</span>
+<span class="typ">void</span> <span class="fn">print_arr</span>(<span class="typ">int</span> *arr, <span class="typ">size_t</span> n) {   <span class="cmt">// must pass length separately!</span>
+    <span class="kw">for</span> (<span class="typ">size_t</span> i = <span class="num">0</span>; i < n; i++)
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, arr[i]);
+}
+
+<span class="cmt">// 2D array — stored row-by-row in memory</span>
+<span class="typ">int</span> matrix[<span class="num">3</span>][<span class="num">4</span>];        <span class="cmt">// 3 rows × 4 cols = 12 ints</span>
+matrix[<span class="num">1</span>][<span class="num">2</span>] = <span class="num">99</span>;      <span class="cmt">// row 1, column 2</span></pre>
+          </div>
+
+          <!-- STRINGS -->
+          <div class="card reveal" id="c-strings">
+            <h2 class="sec-title">09 — Strings</h2>
+            <div class="divider"></div>
+            <p>A C string is just a <code>char</code> array terminated by a null byte (<code>'\0'</code>, value 0).
+              There are no bounds checks. Overflowing a string buffer is one of the most common security
+              vulnerabilities.</p>
+            <pre
+              class="code-block"><span class="tag">C — strings</span><span class="typ">char</span> s1[] = <span class="str">"Hello"</span>;   <span class="cmt">// {'H','e','l','l','o','\0'} — 6 bytes</span>
+<span class="typ">char</span> *s2  = <span class="str">"World"</span>;   <span class="cmt">// pointer to string in .rodata — cannot modify!</span>
+<span class="typ">char</span> s3[<span class="num">64</span>];            <span class="cmt">// buffer on the stack</span>
+
+<span class="cmt">// Safe input — ALWAYS fgets, never gets()</span>
+<span class="fn">fgets</span>(s3, <span class="kw">sizeof</span>(s3), stdin);       <span class="cmt">// reads at most 63 chars + null</span>
+s3[<span class="fn">strcspn</span>(s3, <span class="str">"\n"</span>)] = <span class="num">0</span>;          <span class="cmt">// strip trailing newline</span>
+
+<span class="cmt">// String functions (all from string.h)</span>
+<span class="fn">strlen</span>(s1);                    <span class="cmt">// 5 — does NOT count the '\0'</span>
+<span class="fn">strcmp</span>(s1, s2);                <span class="cmt">// 0=equal, <0=a less, >0=a greater</span>
+<span class="fn">strncmp</span>(s1, s2, <span class="num">3</span>);            <span class="cmt">// compare at most 3 chars</span>
+<span class="fn">strcpy</span>(s3, s1);                <span class="cmt">// copy — NO bounds check, DANGEROUS</span>
+<span class="fn">strncpy</span>(s3, s1, <span class="kw">sizeof</span>(s3));  <span class="cmt">// safer, but might not null-terminate!</span>
+<span class="fn">strcat</span>(s3, s1);                <span class="cmt">// append — NO bounds check, DANGEROUS</span>
+<span class="fn">strchr</span>(s1, <span class="str">'l'</span>);               <span class="cmt">// pointer to first 'l', or NULL</span>
+<span class="fn">strstr</span>(s1, <span class="str">"ell"</span>);             <span class="cmt">// pointer to first "ell", or NULL</span>
+<span class="fn">strdup</span>(s1);                    <span class="cmt">// malloc + strcpy — YOU must free()</span>
+<span class="fn">snprintf</span>(s3, <span class="kw">sizeof</span>(s3), <span class="str">"val=%d"</span>, x);  <span class="cmt">// safe formatted write</span></pre>
+            <div class="note danger"><b>// gets() is always a vulnerability</b><code>gets(buf)</code> reads until
+              newline with zero length limit. Any input longer than buf overwrites adjacent memory. It was removed from
+              C11. Every time you see it in a binary, you've found a buffer overflow.</div>
+          </div>
+
+          <!-- POINTERS -->
+          <div class="card reveal" id="c-pointers">
+            <h2 class="sec-title">10 — Pointers</h2>
+            <div class="divider"></div>
+            <p>A pointer stores a memory address. On x64, every pointer is 8 bytes regardless of what it points to.
+              <code>&amp;</code> gets the address of a variable. <code>*</code> dereferences a pointer (reads the value
+              at that address). Pointers are the most important concept in C for systems programming.</p>
+            <pre
+              class="code-block"><span class="tag">C — pointers</span><span class="typ">int</span> x = <span class="num">42</span>;
+<span class="typ">int</span> *p = &x;          <span class="cmt">// p = address of x</span>
+
+<span class="fn">printf</span>(<span class="str">"%p\n"</span>, p);    <span class="cmt">// prints something like 0x7ffd1234</span>
+<span class="fn">printf</span>(<span class="str">"%d\n"</span>, *p);   <span class="cmt">// dereference: read value at address → 42</span>
+*p = <span class="num">100</span>;             <span class="cmt">// write through pointer: x is now 100</span>
+
+<span class="cmt">// Pass by reference — C's way to modify a caller's variable</span>
+<span class="typ">void</span> <span class="fn">swap</span>(<span class="typ">int</span> *a, <span class="typ">int</span> *b) {
+    <span class="typ">int</span> tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+<span class="fn">swap</span>(&x, &y);   <span class="cmt">// pass addresses</span>
+
+<span class="cmt">// Pointer to pointer</span>
+<span class="typ">int</span> **pp = &p;   <span class="cmt">// pp = address of p</span>
+**pp = <span class="num">200</span>;      <span class="cmt">// double dereference — changes x</span>
+
+<span class="cmt">// NULL: a pointer to nothing. Always check before dereferencing.</span>
+<span class="typ">int</span> *np = <span class="kw">NULL</span>;
+<span class="kw">if</span> (np != <span class="kw">NULL</span>) { *np = <span class="num">5</span>; }   <span class="cmt">// safe — checks first</span>
+*np = <span class="num">5</span>;                        <span class="cmt">// SIGSEGV — null dereference crash</span>
+
+<span class="cmt">// Void pointer: generic — must cast before use</span>
+<span class="typ">void</span> *vp = &x;
+<span class="typ">int</span>  *ip = (<span class="typ">int</span>*)vp;   <span class="cmt">// explicit cast required in C++, optional in C</span></pre>
+          </div>
+
+          <!-- POINTER ARITHMETIC -->
+          <div class="card reveal" id="c-ptrarith">
+            <h2 class="sec-title">11 — Pointer Arithmetic</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">C — pointer arithmetic</span><span class="cmt">// Pointer + integer scales by the size of the pointed-to type!</span>
+<span class="typ">int</span> arr[<span class="num">5</span>] = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>};
+<span class="typ">int</span> *p = arr;     <span class="cmt">// points to arr[0], no & needed</span>
+
+p + <span class="num">1</span>;            <span class="cmt">// address of arr[1] = addr(arr[0]) + 4 bytes</span>
+*(p + <span class="num">2</span>);         <span class="cmt">// = arr[2] = 30</span>
+p[<span class="num">3</span>];             <span class="cmt">// same as *(p+3) = arr[3] = 40</span>
+<span class="num">3</span>[p];             <span class="cmt">// also valid! p[3] = 3[p] (confusing but legal)</span>
+
+p++;               <span class="cmt">// p now points to arr[1]</span>
+p[-<span class="num">1</span>];            <span class="cmt">// negative index is fine — points to arr[0]</span>
+
+<span class="cmt">// Pointer difference = number of elements between them</span>
+<span class="typ">int</span> *q = &arr[<span class="num">4</span>];
+<span class="fn">printf</span>(<span class="str">"%td\n"</span>, q - p);  <span class="cmt">// 4 (they're 4 elements apart)</span>
+
+<span class="cmt">// Dangerous pointer patterns:</span>
+
+<span class="cmt">// 1. Use-after-free</span>
+<span class="typ">int</span> *r = malloc(<span class="num">4</span>);
+free(r);
+*r = <span class="num">99</span>;     <span class="cmt">// writing to freed memory — exploitable!</span>
+
+<span class="cmt">// 2. Stack escape</span>
+<span class="typ">int</span>* <span class="fn">bad</span>() {
+    <span class="typ">int</span> local = <span class="num">5</span>;
+    <span class="kw">return</span> &local;   <span class="cmt">// BAD: stack frame gone after return</span>
+}</pre>
+          </div>
+
+          <!-- STRUCTS -->
+          <div class="card reveal" id="c-structs">
+            <h2 class="sec-title">12 — Structs, Unions, Enums</h2>
+            <div class="divider"></div>
+            <p>Structs group related data. The compiler adds <strong>padding</strong> between fields to ensure alignment
+              — an int must be at a 4-byte address, a double at 8. This invisible padding affects sizeof and matters
+              when parsing binary file formats.</p>
+            <pre
+              class="code-block"><span class="tag">C — structs and padding</span><span class="kw">struct</span> <span class="typ">Padded</span> {
+    <span class="typ">char</span>   a;      <span class="cmt">// offset 0, 1 byte</span>
+                   <span class="cmt">// 3 bytes of PADDING here (to align b)</span>
+    <span class="typ">int</span>    b;      <span class="cmt">// offset 4, 4 bytes</span>
+    <span class="typ">char</span>   c;      <span class="cmt">// offset 8, 1 byte</span>
+                   <span class="cmt">// 7 bytes of PADDING here (to align d)</span>
+    <span class="typ">double</span> d;      <span class="cmt">// offset 16, 8 bytes</span>
+};  <span class="cmt">// sizeof = 24, not 14!</span>
+
+<span class="kw">struct</span> <span class="typ">Tight</span> {   <span class="cmt">// reorder largest-first = less padding</span>
+    <span class="typ">double</span> d;      <span class="cmt">// offset 0</span>
+    <span class="typ">int</span>    b;      <span class="cmt">// offset 8</span>
+    <span class="typ">char</span>   a;      <span class="cmt">// offset 12</span>
+    <span class="typ">char</span>   c;      <span class="cmt">// offset 13</span>
+                   <span class="cmt">// 2 bytes padding at end</span>
+};  <span class="cmt">// sizeof = 16</span>
+
+<span class="cmt">// Packed struct (no padding) — for binary protocols</span>
+<span class="kw">struct</span> __attribute__((packed)) <span class="typ">Pkt</span> {
+    <span class="typ">uint8_t</span>  type;
+    <span class="typ">uint16_t</span> length;   <span class="cmt">// at offset 1</span>
+};  <span class="cmt">// sizeof = 3</span>
+
+<span class="cmt">// Access fields</span>
+<span class="kw">struct</span> <span class="typ">Tight</span> s;
+s.d = <span class="num">3.14</span>;             <span class="cmt">// dot notation</span>
+<span class="kw">struct</span> <span class="typ">Tight</span> *p = &s;
+p->d = <span class="num">3.14</span>;            <span class="cmt">// arrow = (*p).d</span>
+
+<span class="cmt">// Union: all members share the SAME memory</span>
+<span class="kw">union</span> <span class="typ">View</span> {
+    <span class="typ">float</span>    f;
+    <span class="typ">uint32_t</span> u;
+    <span class="typ">uint8_t</span>  b[<span class="num">4</span>];
+};
+<span class="kw">union</span> <span class="typ">View</span> v;
+v.f = <span class="num">1.0f</span>;
+<span class="fn">printf</span>(<span class="str">"0x%08X\n"</span>, v.u);   <span class="cmt">// 0x3F800000 — IEEE 754 bits of 1.0</span></pre>
+          </div>
+
+          <!-- HEAP -->
+          <div class="card reveal" id="c-heap">
+            <h2 class="sec-title">13 — Dynamic Memory — malloc/free</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">C — dynamic memory</span><span class="cmt">// malloc: allocate n bytes, uninitialized (contains garbage!)</span>
+<span class="typ">int</span> *arr = (<span class="typ">int</span>*)malloc(<span class="num">10</span> * <span class="kw">sizeof</span>(<span class="typ">int</span>));
+<span class="kw">if</span> (!arr) { <span class="cmt">/* malloc can fail — ALWAYS check */</span> <span class="kw">return</span> -<span class="num">1</span>; }
+
+<span class="cmt">// calloc: allocate AND zero-initialize</span>
+<span class="typ">int</span> *zeros = (<span class="typ">int</span>*)calloc(<span class="num">10</span>, <span class="kw">sizeof</span>(<span class="typ">int</span>));
+
+<span class="cmt">// realloc: resize an existing allocation</span>
+arr = (<span class="typ">int</span>*)realloc(arr, <span class="num">20</span> * <span class="kw">sizeof</span>(<span class="typ">int</span>));
+
+<span class="cmt">// free: return memory to allocator</span>
+free(arr);
+arr = <span class="kw">NULL</span>;   <span class="cmt">// best practice: null the pointer after free</span>
+
+<span class="cmt">// Block memory operations</span>
+<span class="fn">memset</span>(buf, <span class="num">0</span>, n);          <span class="cmt">// fill n bytes with 0</span>
+<span class="fn">memset</span>(buf, <span class="str">'A'</span>, n);        <span class="cmt">// fill n bytes with 'A'</span>
+<span class="fn">memcpy</span>(dst, src, n);         <span class="cmt">// copy n bytes (no overlap handling)</span>
+<span class="fn">memmove</span>(dst, src, n);        <span class="cmt">// copy n bytes (handles overlap)</span>
+<span class="fn">memcmp</span>(a, b, n);             <span class="cmt">// compare n bytes: 0=equal</span></pre>
+            <div class="note warn"><b>// heap bugs that become security
+                vulnerabilities</b><strong>Use-after-free</strong>: access memory after free().
+              <strong>Double-free</strong>: call free() twice on same pointer — corrupts allocator metadata.
+              <strong>Heap overflow</strong>: write past allocation — overwrites chunk headers of adjacent blocks.
+              <strong>Memory leak</strong>: forget to free() — not directly exploitable but causes crashes.</div>
+          </div>
+
+          <!-- FILE IO -->
+          <div class="card reveal" id="c-fileio">
+            <h2 class="sec-title">14 — File I/O</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">C — file I/O</span><span class="cmt">// Open — modes: "r"=read, "w"=write, "a"=append, "rb"=read binary</span>
+FILE *f = <span class="fn">fopen</span>(<span class="str">"data.txt"</span>, <span class="str">"r"</span>);
+<span class="kw">if</span> (!f) { <span class="fn">perror</span>(<span class="str">"fopen"</span>); <span class="kw">return</span> -<span class="num">1</span>; }
+
+<span class="cmt">// Read line by line</span>
+<span class="typ">char</span> line[<span class="num">256</span>];
+<span class="kw">while</span> (<span class="fn">fgets</span>(line, <span class="kw">sizeof</span>(line), f)) {
+    <span class="fn">printf</span>(<span class="str">"%s"</span>, line);
+}
+<span class="fn">fclose</span>(f);   <span class="cmt">// always close — flushes and frees fd</span>
+
+<span class="cmt">// Write formatted</span>
+FILE *out = <span class="fn">fopen</span>(<span class="str">"out.txt"</span>, <span class="str">"w"</span>);
+<span class="fn">fprintf</span>(out, <span class="str">"value = %d\n"</span>, x);
+
+<span class="cmt">// Binary file read (for parsing ELF, PNG, etc.)</span>
+FILE *bin = <span class="fn">fopen</span>(<span class="str">"file.bin"</span>, <span class="str">"rb"</span>);
+<span class="fn">fseek</span>(bin, <span class="num">0</span>, SEEK_END);
+<span class="typ">long</span> size = <span class="fn">ftell</span>(bin);    <span class="cmt">// file size in bytes</span>
+<span class="fn">fseek</span>(bin, <span class="num">0</span>, SEEK_SET);   <span class="cmt">// rewind to start</span>
+<span class="typ">uint8_t</span> *data = malloc(size);
+<span class="fn">fread</span>(data, <span class="num">1</span>, size, bin);  <span class="cmt">// read all bytes</span>
+
+<span class="cmt">// setvbuf — disable buffering (common in CTF challenge source)</span>
+<span class="fn">setvbuf</span>(stdout, <span class="kw">NULL</span>, _IONBF, <span class="num">0</span>);</pre>
+          </div>
+
+          <!-- CHALLENGES -->
+          <div class="card reveal" id="c-challenges">
+            <h2 class="sec-title">C Programming Challenges — Live Editor</h2>
+            <div class="divider"></div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">Select a challenge to load starter
+              code into the editor. Modify it to solve the task, then click RUN to execute it. The AI simulates real GCC
+              compilation and output.</p>
+
+            <div class="challenge-grid">
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c01'].code, challenges['c01'].name, 'c-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>C-01: Format Specifiers</h4>
+                <p>Print each variable using the right format specifier. Include hex, pointer, float, char, and binary
+                  output.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c02'].code, challenges['c02'].name, 'c-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>C-02: FizzBuzz + Patterns</h4>
+                <p>FizzBuzz 1–30, then print a multiplication table and a triangle with nested loops.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c03'].code, challenges['c03'].name, 'c-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>C-03: Bit Manipulation</h4>
+                <p>Set, clear, toggle, and test individual bits. Count set bits. Reverse the bits of a byte.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c04'].code, challenges['c04'].name, 'c-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>C-04: Integer Overflow</h4>
+                <p>Demonstrate wrapping for uint8 and int32. Show two's complement. Use sizeof on all types.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c05'].code, challenges['c05'].name, 'c-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>C-05: Implement strlen / strcmp</h4>
+                <p>Write strlen, strcmp, and strncpy from scratch without string.h.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c06'].code, challenges['c06'].name, 'c-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>C-06: Pointer Deep Dive</h4>
+                <p>Pointer arithmetic, function pointers, double pointers, negative indexing.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c07'].code, challenges['c07'].name, 'c-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>C-07: Struct Padding</h4>
+                <p>Print sizeof and offsetof each member. Show how reordering fields reduces wasted space.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c08'].code, challenges['c08'].name, 'c-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>C-08: Hex Dump Tool</h4>
+                <p>Print any buffer as address | hex bytes | ASCII — just like xxd or GDB's x command.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c09'].code, challenges['c09'].name, 'c-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>C-09: XOR Cipher + Key Recovery</h4>
+                <p>XOR encrypt a string, then brute-force the 256 possible keys and score by English frequency.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c10'].code, challenges['c10'].name, 'c-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>C-10: Linked List</h4>
+                <p>Implement insert, delete, reverse, and cycle detection. No memory leaks.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c11'].code, challenges['c11'].name, 'c-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>C-11: Safe Integer Math</h4>
+                <p>Implement safe_add and safe_mul for int32 and uint32 that detect overflow before it happens.</p>
+              </div>
+              <div class="ch-card"
+                onclick="selectChallenge(this, challenges['c12'].code, challenges['c12'].name, 'c-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>C-12: Mini Allocator</h4>
+                <p>Build malloc/free on a 64KB static buffer. First-fit, split free blocks, coalesce on free.</p>
+              </div>
+            </div>
+
+            <!-- IDE -->
+            <div class="ide-wrapper">
+              <div class="ide-topbar">
+                <span class="ide-filename" id="c-ide-name">// select a challenge above or write your own</span>
+                <span class="ide-lang-badge">C · gcc</span>
+                <span class="ide-right-info">AI execution simulation</span>
+              </div>
+              <div class="ide-body">
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>editor</span><span id="c-ide-lines"></span></div>
+                  <textarea class="ide-editor" id="c-ide-editor" spellcheck="false" placeholder="#include &lt;stdio.h&gt;
+
+int main() {
+    printf(&quot;Hello, World!\n&quot;);
+    return 0;
+}"></textarea>
+                </div>
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>output</span><span id="c-ide-rt">ready</span></div>
+                  <div class="ide-output" id="c-ide-output">Select a challenge or write your own C code, then click RUN.
+                  </div>
+                </div>
+              </div>
+              <div class="ide-footer">
+                <button class="btn-run" id="c-ide-run" onclick="runCode('c-ide','c')">▶ RUN</button>
+                <button class="btn-secondary" onclick="clearIde('c-ide')">CLEAR</button>
+                <button class="btn-secondary" onclick="explainCode('c-ide','c')">EXPLAIN</button>
+                <span class="ide-status" id="c-ide-status"></span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+      </div><!-- /lesson-grid -->
+    </div><!-- /container -->
+
+    <footer>
+      <span>Low-Level Academy — C Programming</span>
+      <span>Next: <a href="cpp.html" style="color:var(--blue); text-decoration:none;">C++ Internals →</a></span>
+    </footer>
+  </div>
+
+  <script src="shared.js"></script>
+  <script>
+    const challenges = {
+      c01: {
+        name: 'C-01: Format Specifiers', code: `#include <stdio.h>
+#include <stdint.h>
+
+int main() {
+    int      i   = -2147483648;    // INT_MIN
+    uint32_t u   = 0xDEADBEEF;
+    float    f   = 3.14159f;
+    char     c   = 'Z';
+    char    *s   = "exploit";
+    void    *ptr = (void*)0x7ffd12345678UL;
+
+    // TODO: print each variable with the correct format specifier
+    // i   → signed decimal
+    // u   → hex with 0x prefix, 10 chars wide
+    // f   → 4 decimal places
+    // c   → as character AND as its numeric value
+    // s   → as string
+    // ptr → as pointer address
+
+    printf("i   = %d\\n", i);
+    // add the rest here...
+
+    // Print binary of u (write a loop using bitwise ops)
+    printf("u in binary: ");
+    for (int bit = 31; bit >= 0; bit--) {
+        printf("%d", (u >> bit) & 1);
+    }
+    printf("\\n");
+
+    // Size of each type
+    printf("\\nsizeof: int=%zu float=%zu double=%zu void*=%zu\\n",
+        sizeof(int), sizeof(float), sizeof(double), sizeof(void*));
+
+    return 0;
+}` },
+
+      c02: {
+        name: 'C-02: FizzBuzz + Patterns', code: `#include <stdio.h>
+
+int main() {
+    // Task 1: FizzBuzz 1-30
+    printf("=== FizzBuzz ===\\n");
+    for (int i = 1; i <= 30; i++) {
+        if      (i % 15 == 0) printf("FizzBuzz\\n");
+        else if (i %  3 == 0) printf("Fizz\\n");
+        else if (i %  5 == 0) printf("Buzz\\n");
+        else                  printf("%d\\n", i);
+    }
+
+    // Task 2: Multiplication table 1-5
+    printf("\\n=== Multiplication Table ===\\n");
+    printf("   ");
+    for (int i = 1; i <= 5; i++) printf("%4d", i);
+    printf("\\n");
+    for (int row = 1; row <= 5; row++) {
+        printf("%3d", row);
+        for (int col = 1; col <= 5; col++) {
+            printf("%4d", row * col);
+        }
+        printf("\\n");
+    }
+
+    // Task 3: Print a diamond with height 5
+    // TODO: replace this triangle with a full diamond
+    printf("\\n=== Triangle (change to diamond!) ===\\n");
+    for (int h = 1; h <= 5; h++) {
+        for (int j = 0; j < h; j++) printf("*");
+        printf("\\n");
+    }
+
+    return 0;
+}` },
+
+      c03: {
+        name: 'C-03: Bit Manipulation', code: `#include <stdio.h>
+#include <stdint.h>
+
+void print_bin8(uint8_t x) {
+    for (int i = 7; i >= 0; i--)
+        printf("%d", (x >> i) & 1);
+    printf(" (0x%02X = %d)", x, x);
+}
+
+int main() {
+    uint8_t x = 0b10110100;  // = 0xB4 = 180
+    printf("Original:    "); print_bin8(x); printf("\\n");
+
+    // 1. Set bit 0 (least significant)
+    printf("Set bit 0:   "); print_bin8(x | (1 << 0)); printf("\\n");
+
+    // 2. Clear bit 7 (most significant)
+    printf("Clear bit 7: "); print_bin8(x & ~(1 << 7)); printf("\\n");
+
+    // 3. Toggle bit 2
+    printf("Toggle bit2: "); print_bin8(x ^ (1 << 2)); printf("\\n");
+
+    // 4. Test if bit 5 is set
+    printf("Bit 5 set?   %s\\n", (x >> 5) & 1 ? "yes" : "no");
+
+    // 5. Count set bits (popcount) — write your own loop
+    int count = 0;
+    uint8_t tmp = x;
+    while (tmp) {
+        count += tmp & 1;
+        tmp >>= 1;
+    }
+    printf("Set bit count: %d\\n", count);
+
+    // 6. TODO: Reverse the bits of x
+    uint8_t reversed = 0;
+    // ... fill this in ...
+    printf("Reversed:    "); print_bin8(reversed); printf("\\n");
+
+    // 7. XOR swap
+    uint8_t a = 0xAB, b = 0xCD;
+    printf("\\nBefore: a=0x%02X b=0x%02X\\n", a, b);
+    a ^= b; b ^= a; a ^= b;
+    printf("After:  a=0x%02X b=0x%02X (swapped)\\n", a, b);
+
+    return 0;
+}` },
+
+      c04: {
+        name: 'C-04: Integer Overflow', code: `#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+
+int main() {
+    printf("=== Type Sizes ===\\n");
+    printf("char:        %zu byte\\n",  sizeof(char));
+    printf("short:       %zu bytes\\n", sizeof(short));
+    printf("int:         %zu bytes\\n", sizeof(int));
+    printf("long:        %zu bytes\\n", sizeof(long));
+    printf("void*:       %zu bytes\\n", sizeof(void*));
+
+    printf("\\n=== Unsigned Overflow (wraps around) ===\\n");
+    uint8_t u = 255;
+    printf("uint8: 255 + 1 = %u  (0x%02X)\\n", (uint8_t)(u+1), (uint8_t)(u+1));
+    u = 0;
+    printf("uint8:   0 - 1 = %u  (0x%02X)\\n", (uint8_t)(u-1), (uint8_t)(u-1));
+
+    printf("\\n=== Signed Two's Complement ===\\n");
+    int8_t s = 127;
+    // Note: signed overflow is UB, but GCC usually wraps
+    printf("int8: 127 interpreted as unsigned = %u\\n", (uint8_t)s);
+    printf("0xFF as uint8 = %u,  as int8 = %d\\n", (uint8_t)0xFF, (int8_t)0xFF);
+    printf("0x80 as uint8 = %u,  as int8 = %d\\n", (uint8_t)0x80, (int8_t)0x80);
+
+    printf("\\n=== IEEE 754 Float Representation ===\\n");
+    union { float f; uint32_t u; } v;
+    v.f = 1.0f;  printf("1.0f  = 0x%08X\\n", v.u);
+    v.f = -1.0f; printf("-1.0f = 0x%08X\\n", v.u);
+    v.f = 0.0f;  printf("0.0f  = 0x%08X\\n", v.u);
+
+    return 0;
+}` },
+
+      c05: {
+        name: 'C-05: Implement strlen/strcmp', code: `#include <stdio.h>
+#include <assert.h>
+
+// Do NOT use any string.h functions — implement from scratch
+
+size_t my_strlen(const char *s) {
+    const char *p = s;
+    while (*p) p++;
+    return p - s;
+}
+
+int my_strcmp(const char *a, const char *b) {
+    while (*a && *a == *b) { a++; b++; }
+    return (unsigned char)*a - (unsigned char)*b;
+}
+
+// Copy at most n bytes, null-terminate
+char *my_strncpy(char *dst, const char *src, size_t n) {
+    size_t i;
+    for (i = 0; i < n && src[i]; i++) dst[i] = src[i];
+    for (; i < n; i++) dst[i] = 0;  // pad with zeros
+    return dst;
+}
+
+int main() {
+    // strlen tests
+    assert(my_strlen("hello") == 5);
+    assert(my_strlen("") == 0);
+    assert(my_strlen("a") == 1);
+    printf("strlen: all tests passed\\n");
+
+    // strcmp tests
+    assert(my_strcmp("abc", "abc") == 0);
+    assert(my_strcmp("a",   "b")   < 0);
+    assert(my_strcmp("b",   "a")   > 0);
+    assert(my_strcmp("",    "")    == 0);
+    assert(my_strcmp("abc", "ab")  > 0);
+    printf("strcmp: all tests passed\\n");
+
+    // strncpy test
+    char buf[16] = {0};
+    my_strncpy(buf, "Hello, World!", 8);
+    printf("strncpy(8): [%s]\\n", buf);  // expected: [Hello, W]
+
+    // Show raw bytes
+    printf("raw bytes: ");
+    for (int i = 0; i < 10; i++) printf("%02x ", (unsigned char)buf[i]);
+    printf("\\n");
+
+    // TODO: implement my_strcat(dst, src) and test it here
+
+    return 0;
+}` },
+
+      c06: {
+        name: 'C-06: Pointer Deep Dive', code: `#include <stdio.h>
+#include <stdint.h>
+
+typedef int (*BinOp)(int, int);
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+
+void apply(int *arr, size_t n, int val, BinOp op) {
+    for (size_t i = 0; i < n; i++)
+        arr[i] = op(arr[i], val);
+}
+
+int main() {
+    // Pointer arithmetic
+    int arr[5] = {10, 20, 30, 40, 50};
+    int *p = arr;
+
+    printf("arr[0]=%d  *(p+0)=%d\\n",  arr[0], *(p+0));
+    printf("arr[3]=%d  p[3]=%d\\n",    arr[3], p[3]);
+    printf("arr[3]=%d  *(p+3)=%d\\n",  arr[3], *(p+3));
+
+    p += 2;
+    printf("After p+=2: *p=%d (arr[2])\\n", *p);
+    printf("p[-1]=%d (arr[1])\\n", p[-1]);   // negative index!
+
+    // Function pointer table
+    BinOp ops[] = {add, sub, mul};
+    const char *names[] = {"add", "sub", "mul"};
+    for (int i = 0; i < 3; i++) {
+        printf("%s(10, 3) = %d   fn_addr=%p\\n",
+            names[i], ops[i](10, 3), (void*)ops[i]);
+    }
+
+    // Apply via function pointer
+    int data[4] = {1, 2, 3, 4};
+    apply(data, 4, 10, add);
+    printf("After apply add 10: ");
+    for (int i = 0; i < 4; i++) printf("%d ", data[i]);
+    printf("\\n");
+
+    // Double pointer
+    int x = 99;
+    int *ptr = &x;
+    int **pptr = &ptr;
+    **pptr = 200;   // change x through double pointer
+    printf("x through **pptr = %d\\n", x);
+
+    return 0;
+}` },
+
+      c07: {
+        name: 'C-07: Struct Padding', code: `#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+
+struct Wasteful {
+    char    a;    // 1 byte
+    int     b;    // 4 bytes (aligned to 4)
+    char    c;    // 1 byte
+    double  d;    // 8 bytes (aligned to 8)
+    short   e;    // 2 bytes
+};
+
+struct Efficient {
+    double  d;    // 8 bytes
+    int     b;    // 4 bytes
+    short   e;    // 2 bytes
+    char    a;    // 1 byte
+    char    c;    // 1 byte
+};
+
+struct __attribute__((packed)) NetworkHdr {
+    uint8_t  type;
+    uint16_t length;
+    uint32_t seq;
+    uint8_t  flags;
+};
+
+#define SHOW_FIELD(T, field) \
+    printf("  %-8s  offset=%2zu  size=%zu\\n", \
+        #field, offsetof(T, field), sizeof(((T*)0)->field))
+
+int main() {
+    printf("struct Wasteful  (sizeof=%zu)\\n", sizeof(struct Wasteful));
+    SHOW_FIELD(struct Wasteful, a);
+    SHOW_FIELD(struct Wasteful, b);
+    SHOW_FIELD(struct Wasteful, c);
+    SHOW_FIELD(struct Wasteful, d);
+    SHOW_FIELD(struct Wasteful, e);
+
+    printf("\\nstruct Efficient (sizeof=%zu)\\n", sizeof(struct Efficient));
+    SHOW_FIELD(struct Efficient, d);
+    SHOW_FIELD(struct Efficient, b);
+    SHOW_FIELD(struct Efficient, e);
+    SHOW_FIELD(struct Efficient, a);
+    SHOW_FIELD(struct Efficient, c);
+
+    printf("\\nNetworkHdr packed (sizeof=%zu)\\n", sizeof(struct NetworkHdr));
+    SHOW_FIELD(struct NetworkHdr, type);
+    SHOW_FIELD(struct NetworkHdr, length);
+    SHOW_FIELD(struct NetworkHdr, seq);
+    SHOW_FIELD(struct NetworkHdr, flags);
+
+    printf("\\nBytes saved by reordering: %zu\\n",
+        sizeof(struct Wasteful) - sizeof(struct Efficient));
+
+    return 0;
+}` },
+
+      c08: {
+        name: 'C-08: Hex Dump Tool', code: `#include <stdio.h>
+#include <stdint.h>
+#include <ctype.h>
+#include <string.h>
+
+void hexdump(const char *label, const void *data, size_t len) {
+    const uint8_t *p = (const uint8_t*)data;
+    printf("--- %s (%zu bytes) ---\\n", label, len);
+    for (size_t i = 0; i < len; i += 16) {
+        printf("%08zx  ", i);
+        for (size_t j = 0; j < 16; j++) {
+            if (i+j < len) printf("%02x ", p[i+j]);
+            else           printf("   ");
+            if (j == 7) printf(" ");  // middle gap
+        }
+        printf(" |");
+        for (size_t j = 0; j < 16 && i+j < len; j++) {
+            uint8_t c = p[i+j];
+            printf("%c", isprint(c) ? c : '.');
+        }
+        printf("|\\n");
+    }
+    printf("\\n");
+}
+
+struct Person {
+    uint32_t id;
+    char     name[12];
+    float    score;
+    uint16_t flags;
+};
+
+int main() {
+    const char *str = "Hello, 0x41!\\n";
+    hexdump("String", str, strlen(str));
+
+    struct Person p = {
+        .id    = 0xDEADBEEF,
+        .name  = "Alice",
+        .score = 99.5f,
+        .flags = 0x1337,
+    };
+    hexdump("struct Person", &p, sizeof(p));
+
+    int arr[] = {1, 2, 3, 0xCAFEBABE};
+    hexdump("int array", arr, sizeof(arr));
+
+    return 0;
+}` },
+
+      c09: {
+        name: 'C-09: XOR Cipher + Key Recovery', code: `#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+#include <limits.h>
+
+void xor_bytes(uint8_t *data, size_t len, uint8_t key) {
+    for (size_t i = 0; i < len; i++) data[i] ^= key;
+}
+
+int score_english(const uint8_t *data, size_t len) {
+    const char *freq = "etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ";
+    int score = 0;
+    for (size_t i = 0; i < len; i++) {
+        char c = data[i];
+        if (c == ' ') { score += 5; continue; }
+        for (int j = 0; freq[j]; j++) {
+            if (c == freq[j]) { score += (52 - j) / 4 + 1; break; }
+        }
+        if (c < 32 || c > 126) score -= 10;
+    }
+    return score;
+}
+
+int main() {
+    const char *msg = "the quick brown fox jumps over the lazy dog";
+    size_t len = strlen(msg);
+
+    // Encrypt with key 0x42
+    uint8_t ct[256];
+    memcpy(ct, msg, len);
+    xor_bytes(ct, len, 0x42);
+
+    printf("Encrypted (first 16 bytes): ");
+    for (size_t i = 0; i < 16; i++) printf("%02x ", ct[i]);
+    printf("...\\n");
+
+    // Brute-force key recovery
+    uint8_t best_key = 0;
+    int best_score = INT_MIN;
+    for (int k = 0; k < 256; k++) {
+        uint8_t tmp[256];
+        memcpy(tmp, ct, len);
+        xor_bytes(tmp, len, (uint8_t)k);
+        int s = score_english(tmp, len);
+        if (s > best_score) { best_score = s; best_key = (uint8_t)k; }
+    }
+
+    uint8_t pt[256]; memcpy(pt, ct, len); pt[len] = 0;
+    xor_bytes(pt, len, best_key);
+
+    printf("Recovered key:  0x%02X\\n", best_key);
+    printf("Decrypted:      %s\\n", pt);
+    printf("Correct:        %s\\n", strcmp((char*)pt, msg) == 0 ? "YES" : "NO");
+
+    return 0;
+}` },
+
+      c10: {
+        name: 'C-10: Linked List', code: `#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node { int val; struct Node *next; } Node;
+
+Node *new_node(int v) {
+    Node *n = malloc(sizeof(Node));
+    if (!n) { perror("malloc"); exit(1); }
+    n->val = v; n->next = NULL;
+    return n;
+}
+
+Node *push_front(Node *head, int v) {
+    Node *n = new_node(v);
+    n->next = head;
+    return n;
+}
+
+// TODO: implement delete_val(head, v) — remove all nodes with value v
+Node *delete_val(Node *head, int v) {
+    // your code here
+    return head;
+}
+
+Node *reverse(Node *head) {
+    Node *prev = NULL, *cur = head;
+    while (cur) {
+        Node *next = cur->next;
+        cur->next = prev;
+        prev = cur;
+        cur = next;
+    }
+    return prev;
+}
+
+// Floyd's cycle detection
+int has_cycle(Node *head) {
+    Node *slow = head, *fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+        if (slow == fast) return 1;
+    }
+    return 0;
+}
+
+void print_list(Node *head) {
+    while (head) { printf("%d -> ", head->val); head = head->next; }
+    printf("NULL\\n");
+}
+
+void free_list(Node *head) {
+    while (head) { Node *tmp = head; head = head->next; free(tmp); }
+}
+
+int main() {
+    Node *list = NULL;
+    for (int i = 5; i >= 1; i--) list = push_front(list, i);
+    printf("Original:  "); print_list(list);
+
+    list = delete_val(list, 3);
+    printf("Delete 3:  "); print_list(list);
+
+    list = reverse(list);
+    printf("Reversed:  "); print_list(list);
+
+    printf("Cycle:     %s\\n", has_cycle(list) ? "YES" : "no");
+
+    free_list(list);
+    printf("Freed OK\\n");
+    return 0;
+}` },
+
+      c11: {
+        name: 'C-11: Safe Integer Math', code: `#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+
+// Returns 0 on success, -1 on overflow
+int safe_add_u32(uint32_t a, uint32_t b, uint32_t *out) {
+    if (b > UINT32_MAX - a) return -1;
+    *out = a + b;
+    return 0;
+}
+
+int safe_add_i32(int32_t a, int32_t b, int32_t *out) {
+    if (a > 0 && b > INT32_MAX - a) return -1;
+    if (a < 0 && b < INT32_MIN - a) return -1;
+    *out = a + b;
+    return 0;
+}
+
+// TODO: implement safe_mul_u32 and safe_mul_i32
+
+#define T_U32(a, b, ok) do { \
+    uint32_t r; int res = safe_add_u32(a, b, &r); \
+    printf("u32 add(%u,%u): %s val=%u  expected=%s\\n", a, b, \
+        res==0?"ok":"OVERFLOW", res==0?r:0, ok?"ok":"OVERFLOW"); \
+} while(0)
+
+#define T_I32(a, b, ok) do { \
+    int32_t r; int res = safe_add_i32(a, b, &r); \
+    printf("i32 add(%d,%d): %s val=%d  expected=%s\\n", a, b, \
+        res==0?"ok":"OVERFLOW", res==0?r:0, ok?"ok":"OVERFLOW"); \
+} while(0)
+
+int main() {
+    T_U32(1, 2, 1);
+    T_U32(UINT32_MAX, 1, 0);
+    T_U32(2000000000u, 2000000000u, 0);
+
+    T_I32(100, 200, 1);
+    T_I32(INT32_MAX, 1, 0);
+    T_I32(INT32_MIN, -1, 0);
+    T_I32(-1, 1, 1);
+
+    return 0;
+}` },
+
+      c12: {
+        name: 'C-12: Mini Allocator', code: `#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define HEAP_SZ (64 * 1024)
+static uint8_t heap[HEAP_SZ];
+
+typedef struct Block {
+    size_t        size;
+    int           free;
+    struct Block *next;
+} Block;
+
+static Block *head = NULL;
+
+void heap_init() {
+    head = (Block*)heap;
+    head->size = HEAP_SZ - sizeof(Block);
+    head->free = 1;
+    head->next = NULL;
+}
+
+void *my_malloc(size_t size) {
+    size = (size + 15) & ~15UL;  // 16-byte alignment
+    for (Block *b = head; b; b = b->next) {
+        if (!b->free || b->size < size) continue;
+        if (b->size >= size + sizeof(Block) + 16) {
+            Block *split = (Block*)((uint8_t*)(b+1) + size);
+            split->size = b->size - size - sizeof(Block);
+            split->free = 1;
+            split->next = b->next;
+            b->next = split;
+            b->size = size;
+        }
+        b->free = 0;
+        return b + 1;
+    }
+    return NULL;
+}
+
+void my_free(void *ptr) {
+    if (!ptr) return;
+    Block *b = (Block*)ptr - 1;
+    b->free = 1;
+    // Coalesce adjacent free blocks
+    for (Block *cur = head; cur && cur->next; ) {
+        if (cur->free && cur->next->free) {
+            cur->size += sizeof(Block) + cur->next->size;
+            cur->next  = cur->next->next;
+        } else cur = cur->next;
+    }
+}
+
+void heap_stats() {
+    size_t free_b = 0, used_b = 0, n = 0;
+    for (Block *b = head; b; b = b->next, n++) {
+        if (b->free) free_b += b->size;
+        else         used_b += b->size;
+    }
+    printf("blocks=%zu  used=%zu  free=%zu\\n", n, used_b, free_b);
+}
+
+int main() {
+    heap_init();
+    printf("After init:    "); heap_stats();
+
+    int    *a = my_malloc(4 * sizeof(int));
+    char   *b = my_malloc(32);
+    double *c = my_malloc(8 * sizeof(double));
+    printf("After 3 allocs: "); heap_stats();
+
+    if (a) for (int i = 0; i < 4; i++) a[i] = i * 10;
+    if (b) strcpy(b, "hello allocator");
+    printf("a[2]=%d  b='%s'\\n", a ? a[2] : -1, b ? b : "null");
+
+    my_free(b);
+    printf("After free b:  "); heap_stats();
+
+    my_free(a); my_free(c);
+    printf("After free all: "); heap_stats();  // should show 1 big free block
+
+    return 0;
+}` }
+    };
+  </script>
+</body>
+
+</html>

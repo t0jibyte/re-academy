@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reverse Engineering — Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-top: 0.6rem;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 2rem;
+      align-items: start;
+      padding: 2rem 0;
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 62px;
+      border: 1px solid var(--border);
+      background: var(--bg1);
+      font-family: 'IBM Plex Mono', monospace;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+
+    .toc-header {
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toc-sticky a {
+      display: block;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.67rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc-sticky a:hover {
+      color: var(--purple);
+      border-left-color: var(--purple);
+      background: rgba(176, 148, 232, 0.03);
+    }
+
+    @media (max-width: 800px) {
+      .lesson-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc-sticky {
+        position: static;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link">Basics</a>
+    <a href="c.html" class="nav-link">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link">ASM</a>
+    <a href="re.html" class="nav-link active">RE</a>
+    <a href="bugs.html" class="nav-link">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">Module 05</div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <section class="page-hero">
+        <div class="sec-label">// module 05</div>
+        <h1 class="page-title">Reverse <span class="accent" style="color:var(--purple)">Engineering</span></h1>
+        <p class="page-desc">Reverse engineering is the art of understanding software without source code. You take a
+          compiled binary, disassemble it, and figure out exactly what it does. This is the core skill of CTF
+          exploitation, malware analysis, and finding vulnerabilities in closed-source software.</p>
+      </section>
+
+      <div class="lesson-grid">
+        <nav class="toc-sticky">
+          <div class="toc-header">// contents</div>
+          <a href="#re-mindset">RE Mindset</a>
+          <a href="#re-tools">Tool Landscape</a>
+          <a href="#re-file">File Analysis</a>
+          <a href="#re-elf">ELF Deep Dive</a>
+          <a href="#re-got">GOT / PLT</a>
+          <a href="#re-gdb">GDB Workflow</a>
+          <a href="#re-gdb-adv">GDB Advanced</a>
+          <a href="#re-ghidra">Ghidra Basics</a>
+          <a href="#re-decompile">Reading Decompiled C</a>
+          <a href="#re-patterns">Common Patterns</a>
+          <a href="#re-strings">Strings & Data</a>
+          <a href="#re-anti">Anti-RE Tricks</a>
+          <a href="#re-challenges">Challenges</a>
+        </nav>
+        <div>
+
+          <div class="card reveal" id="re-mindset">
+            <h2 class="sec-title">01 — The RE Mindset</h2>
+            <div class="divider"></div>
+            <p>Reverse engineering isn't memorizing instructions — it's asking the right questions. Every binary has a
+              purpose. Your job is to find it through systematic analysis, not brute-force reading.</p>
+            <p>The workflow is always the same: start broad, narrow down. Don't disassemble randomly. Use static
+              analysis to understand structure, then dynamic analysis to observe behavior. Only go to instruction-level
+              detail when you need to.</p>
+            <div class="note tip"><b>// the three questions</b>Every time you look at a binary, ask: <strong>What data
+                does it read?</strong> (inputs, files, env), <strong>What decisions does it make?</strong> (branches,
+              comparisons), and <strong>What does it output?</strong> (writes, network, exit codes). Everything else is
+              implementation detail.</div>
+            <pre class="code-block"><span class="tag">static vs dynamic analysis</span>Static  = examining the binary without running it
+        → objdump, readelf, Ghidra, strings, file
+        → safe for malware, reveals full code, misses runtime behavior
+
+Dynamic = running the binary and observing it
+        → GDB, strace, ltrace, ptrace
+        → sees real values, follows actual execution path, triggers defenses
+
+Most RE workflows alternate: static to understand structure,
+dynamic to verify theories, static again to confirm what you saw.</pre>
+          </div>
+
+          <div class="card reveal" id="re-tools">
+            <h2 class="sec-title">02 — The Tool Landscape</h2>
+            <div class="divider"></div>
+            <table class="tbl">
+              <tr>
+                <th>Tool</th>
+                <th>Type</th>
+                <th>Primary Use</th>
+              </tr>
+              <tr>
+                <td class="tc">file</td>
+                <td>static</td>
+                <td>Identify file type, arch, 32/64-bit, stripped or not</td>
+              </tr>
+              <tr>
+                <td class="tc">strings</td>
+                <td>static</td>
+                <td>Extract printable strings — find URLs, error messages, flags</td>
+              </tr>
+              <tr>
+                <td class="tc">readelf</td>
+                <td>static</td>
+                <td>Parse ELF headers, sections, symbols, dynamic deps</td>
+              </tr>
+              <tr>
+                <td class="tc">objdump</td>
+                <td>static</td>
+                <td>Disassemble sections, show relocations, dump data</td>
+              </tr>
+              <tr>
+                <td class="tc">nm</td>
+                <td>static</td>
+                <td>List symbol table (functions, globals)</td>
+              </tr>
+              <tr>
+                <td class="tc">ldd</td>
+                <td>static</td>
+                <td>Show shared library dependencies</td>
+              </tr>
+              <tr>
+                <td class="tc">checksec</td>
+                <td>static</td>
+                <td>Show security mitigations: NX, PIE, ASLR, canary, RELRO</td>
+              </tr>
+              <tr>
+                <td class="tc">strace</td>
+                <td>dynamic</td>
+                <td>Trace every syscall the process makes</td>
+              </tr>
+              <tr>
+                <td class="tc">ltrace</td>
+                <td>dynamic</td>
+                <td>Trace library function calls (printf, malloc, strcmp…)</td>
+              </tr>
+              <tr>
+                <td class="tc">GDB</td>
+                <td>dynamic</td>
+                <td>Full debugger: breakpoints, memory inspection, register control</td>
+              </tr>
+              <tr>
+                <td class="tc">pwndbg/peda</td>
+                <td>dynamic</td>
+                <td>GDB plugins that add context panels, heap inspection, ROPgadgets</td>
+              </tr>
+              <tr>
+                <td class="tc">Ghidra</td>
+                <td>static</td>
+                <td>NSA-built disassembler + decompiler, free and excellent</td>
+              </tr>
+              <tr>
+                <td class="tc">IDA Free</td>
+                <td>static</td>
+                <td>Industry-standard disassembler, free version for 64-bit</td>
+              </tr>
+              <tr>
+                <td class="tc">radare2/cutter</td>
+                <td>both</td>
+                <td>CLI-heavy alternative to IDA, scriptable, open source</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="card reveal" id="re-file">
+            <h2 class="sec-title">03 — First Contact: File Analysis</h2>
+            <div class="divider"></div>
+            <p>The very first thing you do with any unknown binary is gather information without running it. These
+              commands take seconds and tell you what you're dealing with.</p>
+            <pre class="code-block"><span class="tag">initial recon commands</span><span class="cmt"># 1. What IS this file?</span>
+$ file ./challenge
+challenge: ELF 64-bit LSB executable, x86-64, dynamically linked, not stripped
+
+<span class="cmt"># 2. Security mitigations</span>
+$ checksec --file=./challenge
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO          <span class="cmt">← GOT is writable</span>
+    Stack:    No canary found        <span class="cmt">← stack overflows easier</span>
+    NX:       NX enabled             <span class="cmt">← can't execute shellcode on stack</span>
+    PIE:      No PIE                 <span class="cmt">← binary loads at fixed address 0x400000</span>
+
+<span class="cmt"># 3. Strings — often the most revealing</span>
+$ strings ./challenge
+/lib64/ld-linux-x86-64.so.2
+libc.so.6
+printf
+strcmp
+__libc_start_main
+Enter password:
+Wrong!
+Correct! Here is your flag:
+
+<span class="cmt"># 4. Library dependencies</span>
+$ ldd ./challenge
+    linux-vdso.so.1
+    libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6
+
+<span class="cmt"># 5. Symbols (if not stripped)</span>
+$ nm ./challenge | grep -i "T "
+0000000000401136 T check_password
+0000000000401060 T main
+000000000040117a T validate
+
+<span class="cmt"># 6. Dynamic imports (what library functions it calls)</span>
+$ readelf -d ./challenge | grep NEEDED
+ 0x0000000000000001 (NEEDED)  Shared library: [libc.so.6]
+
+$ objdump -d -j .plt ./challenge | grep "<"
+&lt;printf@plt&gt;:
+&lt;strcmp@plt&gt;:
+&lt;puts@plt&gt;:</pre>
+          </div>
+
+          <div class="card reveal" id="re-elf">
+            <h2 class="sec-title">04 — ELF Binary Deep Dive</h2>
+            <div class="divider"></div>
+            <p>Every Linux binary is an ELF file. Knowing the structure tells you exactly where to look for code, data,
+              symbols, and import tables. Exploit mitigations live in specific ELF sections.</p>
+            <pre class="code-block"><span class="tag">ELF sections — what they contain</span>$ readelf -S ./binary | head -40
+
+Section headers:
+  [Nr] Name          Type        Address           Size
+  [ 1] .interp       PROGBITS    0x0000000000400238  0x001c   <span class="cmt">← path to dynamic linker</span>
+  [ 5] .dynsym       DYNSYM      0x0000000000400280  <span class="cmt">← imported symbol names</span>
+  [ 6] .dynstr       STRTAB      0x0000000000400310  <span class="cmt">← string table for dynsym</span>
+  [ 7] .gnu.version  VERSYM      <span class="cmt">← library version requirements</span>
+  [10] .rela.plt     RELA        <span class="cmt">← PLT relocation entries</span>
+  [12] .plt          PROGBITS    0x0000000000400420  <span class="cmt">← procedure linkage table stubs</span>
+  [13] .text         PROGBITS    0x0000000000400490  <span class="cmt">← all compiled code lives here</span>
+  [14] .rodata       PROGBITS    <span class="cmt">← read-only data: string literals</span>
+  [23] .got          PROGBITS    0x0000000000601000  <span class="cmt">← global offset table (function pointers)</span>
+  [24] .got.plt      PROGBITS    0x0000000000601018  <span class="cmt">← GOT entries for PLT</span>
+  [25] .data         PROGBITS    <span class="cmt">← initialized global variables</span>
+  [26] .bss          NOBITS      <span class="cmt">← uninitialized globals (zero-filled at load)</span>
+
+<span class="cmt"># View .rodata — all your string literals live here</span>
+$ objdump -s -j .rodata ./binary
+
+<span class="cmt"># Dump the entire .text (code) section disassembled</span>
+$ objdump -d -M intel ./binary
+
+<span class="cmt"># Find the address of a specific function</span>
+$ nm ./binary | grep main
+0000000000401136 T main
+
+<span class="cmt"># Memory map at runtime</span>
+$ cat /proc/$(pgrep challenge)/maps
+400000-401000 r--p  ./challenge     <span class="cmt">← ELF header</span>
+401000-402000 r-xp  ./challenge     <span class="cmt">← .text (code, execute only)</span>
+402000-403000 r--p  ./challenge     <span class="cmt">← .rodata (read-only data)</span>
+403000-404000 rw-p  ./challenge     <span class="cmt">← .data/.bss/.got (writable data)</span>
+7fff...000    rw-p  [stack]         <span class="cmt">← stack</span>
+7f...000      r-xp  libc.so.6       <span class="cmt">← libc mapped in</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-got">
+            <h2 class="sec-title">05 — GOT and PLT — How Library Calls Work</h2>
+            <div class="divider"></div>
+            <p>When a binary calls <code>printf</code>, it doesn't know at compile time where <code>printf</code> is in
+              memory — libc loads at a different address every run (ASLR). The solution is a two-table indirection: the
+              PLT and the GOT.</p>
+            <pre class="code-block"><span class="tag">PLT / GOT mechanism</span>When your code calls printf:
+
+1. call printf@plt          <span class="cmt">; calls the PLT stub (fixed address in binary)</span>
+
+2. PLT stub does:
+   jmp [printf@got]         <span class="cmt">; indirect jump through GOT entry</span>
+
+3. First call: GOT entry points back to PLT resolver
+   → dynamic linker resolves printf's real address
+   → writes real address into GOT entry
+   → jumps to printf
+
+4. Subsequent calls: GOT entry already has real address
+   → direct jump, no resolution needed
+
+<span class="cmt">; In the disassembly it looks like:</span>
+0x401030 &lt;printf@plt&gt;:
+    jmp  QWORD PTR [rip+0x200fe2]  <span class="cmt">; [0x602018] = printf@got.plt</span>
+    push 0                          <span class="cmt">; index for lazy resolver</span>
+    jmp  0x401000                   <span class="cmt">; jump to resolver</span>
+
+<span class="cmt"># Show GOT entries at runtime with GDB:</span>
+(gdb) got                          <span class="cmt">; pwndbg command</span>
+(gdb) x/gx 0x602018               <span class="cmt">; manual: read 8 bytes at GOT entry</span>
+→ 0x7ffff7a3d670 &lt;printf&gt;          <span class="cmt">; after resolution: real libc address</span></pre>
+            <div class="note warn"><b>// why this matters for exploitation</b>With Partial RELRO (the default), the GOT
+              is <strong>writable</strong> at runtime. If you can write an arbitrary 8 bytes anywhere
+              (write-what-where), you can overwrite a GOT entry. Then the next time the program calls that function, it
+              jumps to your controlled address instead — giving you code execution.</div>
+          </div>
+
+          <div class="card reveal" id="re-gdb">
+            <h2 class="sec-title">06 — GDB Workflow — The Essential Commands</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">GDB core workflow</span><span class="cmt"># Launch</span>
+$ gdb ./binary
+$ gdb -q ./binary          <span class="cmt">; quiet (no banner)</span>
+$ gdb ./binary core        <span class="cmt">; post-mortem: load with coredump</span>
+
+<span class="cmt"># Run the program</span>
+(gdb) run                  <span class="cmt">; run with no args</span>
+(gdb) run arg1 arg2        <span class="cmt">; run with args</span>
+(gdb) run &lt; input.txt      <span class="cmt">; run with stdin redirect</span>
+
+<span class="cmt"># Breakpoints</span>
+(gdb) break main           <span class="cmt">; break at function name</span>
+(gdb) break *0x401136      <span class="cmt">; break at exact address</span>
+(gdb) break *main+42       <span class="cmt">; break at offset from symbol</span>
+(gdb) info breakpoints     <span class="cmt">; list all breakpoints</span>
+(gdb) delete 1             <span class="cmt">; delete breakpoint #1</span>
+(gdb) disable 1            <span class="cmt">; disable without deleting</span>
+
+<span class="cmt"># Stepping</span>
+(gdb) next       <span class="cmt">; step over (execute one C line)</span>
+(gdb) step       <span class="cmt">; step into function calls</span>
+(gdb) nexti      <span class="cmt">; step over ONE assembly instruction</span>
+(gdb) stepi      <span class="cmt">; step into call (assembly level)</span>
+(gdb) continue   <span class="cmt">; run until next breakpoint</span>
+(gdb) finish     <span class="cmt">; run until current function returns</span>
+(gdb) until *0x401170  <span class="cmt">; run until specific address</span>
+
+<span class="cmt"># Registers</span>
+(gdb) info registers       <span class="cmt">; show all registers</span>
+(gdb) print $rax           <span class="cmt">; print one register</span>
+(gdb) print/x $rax         <span class="cmt">; print in hex</span>
+(gdb) set $rax = 0         <span class="cmt">; MODIFY a register</span>
+
+<span class="cmt"># Memory inspection (x command = examine)</span>
+(gdb) x/10gx $rsp          <span class="cmt">; 10 × 8-byte hex (stack)</span>
+(gdb) x/20wx 0x601000      <span class="cmt">; 20 × 4-byte hex (data section)</span>
+(gdb) x/s 0x402010         <span class="cmt">; as null-terminated string</span>
+(gdb) x/i $rip             <span class="cmt">; disassemble instruction at RIP</span>
+(gdb) x/20i main           <span class="cmt">; disassemble 20 instructions from main</span>
+
+<span class="cmt"># Disassembly</span>
+(gdb) disas main           <span class="cmt">; disassemble whole function</span>
+(gdb) disas 0x401136,+50  <span class="cmt">; disassemble 50 bytes from address</span>
+(gdb) set disassembly-flavor intel  <span class="cmt">; use Intel syntax (do this first!)</span>
+(gdb) layout asm           <span class="cmt">; TUI: split window with asm view</span>
+(gdb) layout regs          <span class="cmt">; TUI: add register window</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-gdb-adv">
+            <h2 class="sec-title">07 — GDB Advanced Techniques</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">GDB power features</span><span class="cmt"># Watchpoints: break when memory changes</span>
+(gdb) watch *0x601080      <span class="cmt">; break when this address is written</span>
+(gdb) rwatch *0x601080     <span class="cmt">; break when read</span>
+(gdb) awatch *0x601080     <span class="cmt">; break on read OR write</span>
+
+<span class="cmt"># Conditional breakpoints</span>
+(gdb) break loop if $rcx == 0
+(gdb) break *0x401136 if $rdi > 10
+
+<span class="cmt"># Scripting: commands to run at each breakpoint</span>
+(gdb) break check_password
+(gdb) commands 1
+&gt; silent
+&gt; x/s $rdi               <span class="cmt">; print the string arg (rdi = first arg)</span>
+&gt; continue
+&gt; end
+
+<span class="cmt"># .gdbinit: run at startup</span>
+$ cat ~/.gdbinit
+set disassembly-flavor intel
+set pagination off
+break main
+
+<span class="cmt"># pwndbg — install for massive quality-of-life upgrade</span>
+$ git clone https://github.com/pwndbg/pwndbg
+$ cd pwndbg && ./setup.sh
+
+<span class="cmt"># pwndbg extra commands:</span>
+(gdb) context           <span class="cmt">; show registers, stack, disasm, backtrace</span>
+(gdb) telescope $rsp 20 <span class="cmt">; smart stack view — dereferences pointers</span>
+(gdb) got               <span class="cmt">; show all GOT entries and their values</span>
+(gdb) rop               <span class="cmt">; find ROP gadgets in the binary</span>
+(gdb) heap              <span class="cmt">; show heap chunks</span>
+(gdb) vis_heap_chunks   <span class="cmt">; visual heap map</span>
+(gdb) cyclic 200        <span class="cmt">; generate patterned string (De Bruijn)</span>
+(gdb) cyclic -l 0x6161616c  <span class="cmt">; find offset of pattern in crash address</span>
+
+<span class="cmt"># Find the offset to RIP in a crash:</span>
+$ python3 -c "import pwn; print(pwn.cyclic(200))" | ./binary
+Segfault at 0x6161616c
+(gdb) cyclic -l 0x6161616c
+76                      <span class="cmt">← 76 bytes to reach return address</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-ghidra">
+            <h2 class="sec-title">08 — Ghidra Basics</h2>
+            <div class="divider"></div>
+            <p>Ghidra is the NSA's open-source decompiler and disassembler. It takes a stripped binary and produces
+              readable C-like pseudocode. It's free, powerful, and the standard tool in CTF and professional RE.</p>
+            <pre class="code-block"><span class="tag">Ghidra workflow</span>1. Open Ghidra → New Project → Import binary
+2. Double-click to analyze (accept all default analyzers)
+3. Wait for analysis (30s to a few minutes for large binaries)
+
+Key windows:
+  Symbol Tree    — lists all functions (main, sub_401234, etc.)
+  Decompiler     — shows C-like pseudocode for selected function
+  Listing        — disassembly with addresses and bytes
+  Data Type Mgr  — struct definitions you can apply to memory
+
+Navigation:
+  G           — go to address
+  Ctrl+F      — search
+  Ctrl+L      — go to label/symbol
+  Double-click — follow reference (jump to function/data)
+  Alt+←       — go back (like browser back button)
+
+Key operations:
+  Rename function:   press L on function name → "check_password"
+  Rename variable:   press L on variable in decompiler
+  Retype variable:   press Y in decompiler → change int to char*
+  Apply struct:      right-click → Data → choose struct type
+
+Finding main in stripped binary:
+  → Look for function that calls __libc_start_main
+  → First argument to __libc_start_main IS main
+  → In Symbol Tree: search for "entry" — this is _start
+  → _start calls __libc_start_main(main, argc, argv, ...)
+
+Finding interesting functions fast:
+  → Window → Function Call Graph
+  → Look for functions called many times (likely helpers)
+  → Look for functions calling strcmp, memcmp (often password checks)
+  → Search strings → double-click → "references to" → lands in code</pre>
+          </div>
+
+          <div class="card reveal" id="re-decompile">
+            <h2 class="sec-title">09 — Reading Decompiled C</h2>
+            <div class="divider"></div>
+            <p>Ghidra's decompiler output isn't real C — it's a best-effort translation. Learning to read it means
+              recognizing what real code looks like after compilation and decompilation artifacts.</p>
+            <pre class="code-block"><span class="tag">decompiler output vs real C</span><span class="cmt">// Ghidra decompiler output (stripped, -O2)</span>
+undefined8 FUN_00401136(void)
+{
+  char *pcVar1;
+  long in_FS_OFFSET;
+  char local_48 [64];
+  long local_10;
+
+  local_10 = *(long *)(in_FS_OFFSET + 0x28);    <span class="cmt">// stack canary read</span>
+  printf("Enter password: ");
+  fgets(local_48, 64, stdin);
+  pcVar1 = strchr(local_48, '\n');              <span class="cmt">// strip newline</span>
+  if (pcVar1 != (char *)0x0) {
+    *pcVar1 = '\0';
+  }
+  pcVar1 = (char *)strcmp(local_48, "s3cr3t_p4ss");
+  if (pcVar1 == (char *)0x0) {                  <span class="cmt">// strcmp returns 0 on match</span>
+    puts("Correct!");
+  }
+  else {
+    puts("Wrong!");
+  }
+  if (local_10 != *(long *)(in_FS_OFFSET + 0x28)) {  <span class="cmt">// canary check</span>
+                    <span class="cmt">/* WARNING: Subroutine does not return */</span>
+    __stack_chk_fail();
+  }
+  return 0;
+}
+
+<span class="cmt">// What this actually was in the original source:</span>
+int main() {
+  char buf[64];
+  printf("Enter password: ");
+  fgets(buf, 64, stdin);
+  buf[strcspn(buf, "\n")] = 0;
+  if (strcmp(buf, "s3cr3t_p4ss") == 0)
+    puts("Correct!");
+  else
+    puts("Wrong!");
+  return 0;
+}
+
+<span class="cmt">// Key decompiler artifacts to recognize:</span>
+<span class="cmt">// - in_FS_OFFSET = thread-local storage pointer → stack canary</span>
+<span class="cmt">// - undefined8 = 8-byte return value (could be int, long, pointer)</span>
+<span class="cmt">// - local_10, local_48 = named by stack offset, not original names</span>
+<span class="cmt">// - (char *)0x0 = NULL</span>
+<span class="cmt">// - strcmp cast to char* = Ghidra confused about return type</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-patterns">
+            <h2 class="sec-title">10 — Recognizing Common Binary Patterns</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">patterns in disassembly</span><span class="cmt">// 1. String comparison — the CTF password check</span>
+0x401156: lea  rsi, [rip+0x1aa]   <span class="cmt">; "s3cr3t"</span>
+0x40115d: mov  rdi, rax            <span class="cmt">; user input</span>
+0x401160: call strcmp@plt
+0x401165: test eax, eax
+0x401167: jne  0x401180            <span class="cmt">; if not equal: fail</span>
+<span class="cmt">; Cheat: set $eax = 0 in GDB to force "equal" and bypass</span>
+
+<span class="cmt">// 2. Anti-debug: ptrace check (detects GDB)</span>
+0x401200: mov  eax, 101            <span class="cmt">; syscall 101 = ptrace</span>
+0x401205: xor  edi, edi            <span class="cmt">; PTRACE_TRACEME</span>
+0x401207: xor  esi, esi
+0x401209: xor  edx, edx
+0x40120b: xor  r10d, r10d
+0x40120e: syscall
+0x401210: cmp  rax, -1
+0x401214: je   0x401250            <span class="cmt">; if ptrace fails → being debugged</span>
+<span class="cmt">; Bypass: set $rax = 0 in GDB right after syscall</span>
+
+<span class="cmt">// 3. XOR obfuscation (decrypting a string at runtime)</span>
+0x401300: lea  rdi, [rip+0x200]   <span class="cmt">; encrypted bytes</span>
+0x401307: mov  ecx, 16            <span class="cmt">; length</span>
+0x40130c: mov  al, [rdi+rcx-1]
+0x401310: xor  al, 0x42           <span class="cmt">; XOR key</span>
+0x401312: mov  [rdi+rcx-1], al
+0x401316: dec  ecx
+0x401318: jnz  0x40130c
+<span class="cmt">; Trick: break after the loop, x/s $rdi to read decrypted string</span>
+
+<span class="cmt">// 4. Stack canary check</span>
+0x4011a0: mov  rax, [rbp-0x8]     <span class="cmt">; load saved canary</span>
+0x4011a4: xor  rax, [fs:0x28]     <span class="cmt">; compare with original</span>
+0x4011ad: jne  0x4011bf           <span class="cmt">; mismatch → crash</span>
+0x4011af: leave
+0x4011b0: ret
+
+<span class="cmt">// 5. A vtable call (C++)</span>
+0x401250: mov  rax, [rdi]         <span class="cmt">; load vptr from object</span>
+0x401253: mov  rax, [rax+0x10]   <span class="cmt">; vtable[2] = third virtual function</span>
+0x401257: call rax               <span class="cmt">; dispatch</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-strings">
+            <h2 class="sec-title">11 — Strings, Data, and Cross-References</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">finding and following data</span><span class="cmt"># Extract all printable strings (min 6 chars)</span>
+$ strings -n 6 ./binary
+$ strings -n 6 -t x ./binary   <span class="cmt">; -t x: show hex offset in file</span>
+
+<span class="cmt"># Find strings AND see where they're used</span>
+$ grep -a "password" ./binary   <span class="cmt">; -a: treat binary as text</span>
+
+<span class="cmt"># In Ghidra: right-click a string → References → Show References To</span>
+<span class="cmt"># This instantly jumps to the code that uses that string</span>
+
+<span class="cmt"># Hex dump: see raw bytes of a section</span>
+$ xxd ./binary | head -50
+$ xxd ./binary | grep -A2 -B2 "flag"
+
+<span class="cmt"># Check if binary is packed (compressed/encrypted)</span>
+$ strings ./binary | wc -l
+<span class="cmt"># Very few strings + "UPX" in output → packed with UPX</span>
+$ upx -d ./binary -o ./unpacked  <span class="cmt">; decompress UPX</span>
+
+<span class="cmt"># objdump: dump a specific data section</span>
+$ objdump -s -j .rodata ./binary   <span class="cmt">; hex+ascii dump of .rodata</span>
+$ objdump -s -j .data   ./binary   <span class="cmt">; initialized globals</span>
+
+<span class="cmt"># readelf: list all sections with their sizes</span>
+$ readelf -S ./binary
+<span class="cmt"># Look for sections with unexpected names — obfuscated binaries</span>
+<span class="cmt"># add custom sections to hide code</span></pre>
+          </div>
+
+          <div class="card reveal" id="re-anti">
+            <h2 class="sec-title">12 — Anti-RE Tricks and Bypasses</h2>
+            <div class="divider"></div>
+            <table class="tbl">
+              <tr>
+                <th>Technique</th>
+                <th>How to Detect</th>
+                <th>Bypass</th>
+              </tr>
+              <tr>
+                <td>ptrace() anti-debug</td>
+                <td>syscall 101 or ptrace() call near start</td>
+                <td>GDB: set $rax=0 after syscall; or patch the binary</td>
+              </tr>
+              <tr>
+                <td>Timing checks</td>
+                <td>gettimeofday/clock_gettime before and after, compare delta</td>
+                <td>Step over the check; patch je→jmp</td>
+              </tr>
+              <tr>
+                <td>Self-modifying code</td>
+                <td>mprotect() then writes to .text</td>
+                <td>Set breakpoint AFTER modification, read decrypted code</td>
+              </tr>
+              <tr>
+                <td>XOR string obfuscation</td>
+                <td>Strings aren't readable in .rodata; loop with xor before use</td>
+                <td>Break after deobfuscation loop, dump memory</td>
+              </tr>
+              <tr>
+                <td>UPX packing</td>
+                <td>Tiny .text, large entropy, "UPX" string</td>
+                <td>upx -d ./binary or break at OEP</td>
+              </tr>
+              <tr>
+                <td>Stripped symbols</td>
+                <td>file says "stripped"; nm shows no T symbols</td>
+                <td>Ghidra analysis; identify main via __libc_start_main</td>
+              </tr>
+              <tr>
+                <td>Opaque predicates</td>
+                <td>Unreachable code, always-true conditions</td>
+                <td>Recognize constant-expression branches; ignore dead paths</td>
+              </tr>
+            </table>
+            <pre class="code-block"><span class="tag">patch a binary to bypass a check</span><span class="cmt"># Turn a conditional jump into unconditional (NOP it out)</span>
+<span class="cmt"># Find the je instruction that skips our code:</span>
+$ objdump -d -M intel ./binary | grep -B5 "Wrong"
+  401167: 74 17       je  0x401180    <span class="cmt">← 74 17 = je rel8</span>
+
+<span class="cmt"># NOP out the jump (replace with 0x90 0x90)</span>
+$ printf '\x90\x90' | dd of=./binary bs=1 seek=$((0x167)) conv=notrunc
+
+<span class="cmt"># OR: flip je (0x74) to jne (0x75) — takes opposite branch</span>
+$ printf '\x75' | dd of=./binary bs=1 seek=$((0x167)) conv=notrunc
+
+<span class="cmt"># Make it executable and test</span>
+$ chmod +x ./binary && ./binary</pre>
+          </div>
+
+          <!-- CHALLENGES -->
+          <div class="card reveal" id="re-challenges">
+            <h2 class="sec-title">RE Challenges — Live Editor</h2>
+            <div class="divider"></div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">These challenges simulate reverse
+              engineering tasks in C. Each one asks you to understand what a black-box function does without knowing its
+              source — the core RE skill.</p>
+
+            <div class="challenge-grid">
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r01'].code, re_ch['r01'].name, 're-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>RE-01: Crack the Password</h4>
+                <p>A binary reads a password and prints Correct or Wrong. Figure out what it accepts without reading the
+                  check logic directly.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r02'].code, re_ch['r02'].name, 're-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>RE-02: Decode Obfuscated String</h4>
+                <p>A function XOR-encodes a string at compile time. Recover the original string by reversing the
+                  transformation.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r03'].code, re_ch['r03'].name, 're-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>RE-03: License Key Validator</h4>
+                <p>A license key validator runs 5 checks in sequence. Reverse each check to generate a valid key.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r04'].code, re_ch['r04'].name, 're-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>RE-04: Mystery Algorithm</h4>
+                <p>A function transforms a 32-bit integer. Given 10 input/output pairs, figure out the algorithm and
+                  implement it.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r05'].code, re_ch['r05'].name, 're-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>RE-05: Anti-Debug Bypass</h4>
+                <p>A program detects debugging and outputs garbage. Identify and neutralize the detection logic.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, re_ch['r06'].code, re_ch['r06'].name, 're-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>RE-06: Custom Crypto</h4>
+                <p>A binary encrypts a flag with a custom cipher. Reverse the cipher and write the decryptor.</p>
+              </div>
+            </div>
+
+            <div class="ide-wrapper">
+              <div class="ide-topbar">
+                <span class="ide-filename" id="re-ide-name">// select a challenge above</span>
+                <span class="ide-lang-badge">C · reversing simulation</span>
+                <span class="ide-right-info">AI execution simulation</span>
+              </div>
+              <div class="ide-body">
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>editor</span></div>
+                  <textarea class="ide-editor" id="re-ide-editor" spellcheck="false" placeholder="#include &lt;stdio.h&gt;
+
+int main() {
+    // Reverse engineering challenge
+    return 0;
+}"></textarea>
+                </div>
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>output</span><span id="re-ide-rt">ready</span></div>
+                  <div class="ide-output" id="re-ide-output">Select a challenge to start.</div>
+                </div>
+              </div>
+              <div class="ide-footer">
+                <button class="btn-run" id="re-ide-run" onclick="runCode('re-ide','c')">▶ RUN</button>
+                <button class="btn-secondary" onclick="clearIde('re-ide')">CLEAR</button>
+                <button class="btn-secondary" onclick="explainCode('re-ide','re')">EXPLAIN</button>
+                <span class="ide-status" id="re-ide-status"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <footer>
+      <span>Low-Level Academy — Reverse Engineering</span>
+      <span>Next: <a href="bugs.html" style="color:var(--purple); text-decoration:none;">Binary Exploitation
+          →</a></span>
+    </footer>
+  </div>
+  <script src="shared.js"></script>
+  <script>
+    const re_ch = {
+      r01: {
+        name: 'RE-01: Crack the Password', code: `#include <stdio.h>
+#include <string.h>
+
+// This is the "compiled binary" you're reversing.
+// Your job: figure out the correct input WITHOUT reading check_password().
+// Use only the output of test_input() as your oracle.
+// Hint: think like you have ltrace or GDB.
+
+static int check_password(const char *input) {
+    // Pretend this is obfuscated / stripped
+    // You can't read this in the real challenge
+    const char *secret = "r3v3rs3_m3";
+    return strcmp(input, secret) == 0;
+}
+
+void test_input(const char *guess) {
+    if (check_password(guess))
+        printf("Correct! Password: %s\\n", guess);
+    else
+        printf("Wrong: '%s'\\n", guess);
+}
+
+int main() {
+    // Strategy: use ltrace to see what strcmp() receives
+    // ltrace ./binary <<< "test"
+    // Output: strcmp("test", "r3v3rs3_m3") = -18
+    // → first argument is your input, second is the secret!
+
+    // Now verify your finding:
+    test_input("wrong_guess");
+    test_input("r3v3rs3_m3");   // TODO: fill in what ltrace revealed
+
+    // Bonus: what if it used strncmp(input, secret, 5)?
+    // That only compares 5 chars — you only need to match the first 5.
+    printf("\\nWith strncmp(5):\\n");
+    printf("%d\\n", strncmp("r3v3r_anything", "r3v3rs3_m3", 5));  // 0 = match!
+
+    return 0;
+}` },
+
+      r02: {
+        name: 'RE-02: Decode Obfuscated String', code: `#include <stdio.h>
+#include <string.h>
+
+// Strings can be XOR-encrypted at compile time to hide them from 'strings' tool.
+// The decryption runs at function entry, so GDB can catch it after.
+
+// Encoded data (XOR'd with key 0x55)
+static unsigned char encoded[] = {
+    0x31, 0x62, 0x20, 0x62, 0x31, 0x7a, 0x24, 0x36,
+    0x31, 0x7a, 0x61, 0x36, 0x00
+};
+// Key used to encode: 0x55
+
+void decode_in_place(unsigned char *data, int len, unsigned char key) {
+    for (int i = 0; i < len; i++)
+        data[i] ^= key;
+}
+
+// This is what a malware sample might do:
+void suspicious_function() {
+    unsigned char local_copy[64];
+    memcpy(local_copy, encoded, sizeof(encoded));
+    decode_in_place(local_copy, sizeof(encoded) - 1, 0x55);
+    printf("Decoded string: %s\\n", (char*)local_copy);
+}
+
+// Your task: without calling suspicious_function(), 
+// write your own decoder that recovers the string.
+char* manual_decode(const unsigned char *data, int len, unsigned char key) {
+    static char buf[64];
+    for (int i = 0; i < len; i++)
+        buf[i] = data[i] ^ key;
+    buf[len] = 0;
+    return buf;
+}
+
+int main() {
+    printf("Encoded bytes: ");
+    for (int i = 0; i < (int)sizeof(encoded)-1; i++)
+        printf("%02x ", encoded[i]);
+    printf("\\n");
+
+    // Decode it
+    char *result = manual_decode(encoded, sizeof(encoded)-1, 0x55);
+    printf("Recovered: %s\\n", result);
+
+    // Verify
+    suspicious_function();
+
+    // TODO: What if you didn't know the key?
+    // Brute-force: try all 256 possible byte keys.
+    // For each key, decode and check if result is printable ASCII.
+    printf("\\nBrute-forcing key:\\n");
+    for (int key = 0; key < 256; key++) {
+        char candidate[64];
+        int printable = 1;
+        for (int i = 0; i < (int)sizeof(encoded)-1; i++) {
+            candidate[i] = encoded[i] ^ key;
+            if (candidate[i] < 0x20 || candidate[i] > 0x7e) { printable = 0; break; }
+        }
+        if (printable) {
+            candidate[sizeof(encoded)-1] = 0;
+            printf("  key=0x%02x -> \"%s\"\\n", key, candidate);
+        }
+    }
+    return 0;
+}` },
+
+      r03: {
+        name: 'RE-03: License Key Validator', code: `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+// License key format: XXXX-XXXX-XXXX-XXXX (16 hex chars + 3 dashes)
+// 5 checks must all pass. Reverse each one to build a valid key.
+
+typedef struct { char key[20]; } LicenseKey;
+
+// Check 1: correct format
+int check_format(const char *k) {
+    if (strlen(k) != 19) return 0;
+    for (int i = 0; i < 19; i++) {
+        if (i == 4 || i == 9 || i == 14) {
+            if (k[i] != '-') return 0;
+        } else {
+            if (!isxdigit(k[i])) return 0;
+        }
+    }
+    return 1;
+}
+
+// Check 2: first group must sum to 0x40
+int check_group1(const char *k) {
+    int sum = 0;
+    for (int i = 0; i < 4; i++) sum += k[i];
+    return sum == 0x40 * 4; // all chars average to 0x40 = '@'... wait let's make it simple
+}
+
+// Check 3: last group XOR must equal 0xAB
+int check_group4(const char *k) {
+    unsigned char xr = 0;
+    for (int i = 15; i < 19; i++) xr ^= (unsigned char)k[i];
+    return xr == 0xAB;
+}
+
+// Check 4: group 2 must be palindrome
+int check_group2(const char *k) {
+    return k[5] == k[8] && k[6] == k[7];
+}
+
+// Check 5: group 3 encodes the length of the key
+int check_group3(const char *k) {
+    // groups 10-13 = hex encoding of 19 (length)
+    unsigned int val = 0;
+    for (int i = 10; i < 14; i++) {
+        val <<= 4;
+        char c = k[i];
+        val |= (c >= '0' && c <= '9') ? c-'0' : (toupper(c)-'A'+10);
+    }
+    return val == 0x0013;  // 0x13 = 19 decimal
+}
+
+int validate(const char *k) {
+    printf("  Format:  %s\\n", check_format(k)  ? "PASS" : "FAIL");
+    printf("  Group1:  %s\\n", check_group1(k)  ? "PASS" : "FAIL");
+    printf("  Group2:  %s\\n", check_group2(k)  ? "PASS" : "FAIL");
+    printf("  Group3:  %s\\n", check_group3(k)  ? "PASS" : "FAIL");
+    printf("  Group4:  %s\\n", check_group4(k)  ? "PASS" : "FAIL");
+    return check_format(k) && check_group1(k) && check_group2(k)
+        && check_group3(k) && check_group4(k);
+}
+
+int main() {
+    // TODO: construct a key that passes all 5 checks
+    // Hints:
+    //   Check 2: group1 sum = 0x40*4 = 256... that doesn't work with hex chars.
+    //            Let's actually check: '0'=0x30, '9'=0x39, 'A'=0x41, 'F'=0x46
+    //            Just test to see what group1 check actually does.
+    //   Check 4: group2 is a palindrome, so ABBA or DEED etc.
+    //   Check 5: group3 must hex-decode to 0x0013 → "0013"
+    //   Check 6: group4 XOR must = 0xAB
+
+    printf("Testing invalid key:\\n");
+    validate("0000-0000-0000-0000");
+
+    printf("\\nTesting crafted key:\\n");
+    // Build the correct key by satisfying each constraint
+    char candidate[] = "4040-ABBA-0013-????";
+    // TODO: fix group4 so its XOR = 0xAB
+    // Current XOR of "????" = ?
+    // Replace ???? with hex chars whose XOR = 0xAB
+    strcpy(candidate + 15, "1234");  // try: 0x31^0x32^0x33^0x34
+    printf("XOR of '1234' = 0x%02X (need 0xAB)\\n",
+           (unsigned char)('1'^'2'^'3'^'4'));
+    
+    // Fix it: find last char so XOR = 0xAB
+    unsigned char xr = 0x31 ^ 0x32 ^ 0x33;
+    char last = 0xAB ^ xr;
+    printf("Last char should be: 0x%02X ('%c')\\n", last, isprint(last)?last:'?');
+    
+    validate(candidate);
+    return 0;
+}` },
+
+      r04: {
+        name: 'RE-04: Mystery Algorithm', code: `#include <stdio.h>
+#include <stdint.h>
+
+// Black-box: you don't know the source, just the input/output pairs.
+// Figure out what this function computes.
+uint32_t black_box(uint32_t n) {
+    uint32_t r = n;
+    r = ((r >> 16) ^ r) * 0x45d9f3b;
+    r = ((r >> 16) ^ r) * 0x45d9f3b;
+    r = (r >> 16) ^ r;
+    return r;
+}
+
+// Input/output pairs from "running the binary":
+// black_box(0)          = 0
+// black_box(1)          = 2654435769
+// black_box(2)          = 3639127085
+// black_box(0xFFFFFFFF) = 2097176807
+// black_box(12345)      = ?  (you compute this)
+
+// This is actually a hash function (Wang hash / integer hash).
+// Properties to discover:
+//  - Is it reversible?
+//  - Does black_box(black_box(n)) have a pattern?
+//  - What's the fixed point (black_box(n) == n)?
+
+// Your task: given ONLY the input/output pairs (no source),
+// write a function that matches the behavior.
+uint32_t my_version(uint32_t n) {
+    // TODO: implement your hypothesis here
+    // Start by: is it linear? (output proportional to input?)
+    // Is it a bit shuffle? (count set bits in/out)
+    // Does output distribute well? (hash property)
+    return 0; // placeholder
+}
+
+int main() {
+    printf("=== Black-box observations ===\\n");
+    uint32_t tests[] = {0, 1, 2, 3, 4, 7, 8, 12345, 0xFFFF, 0xFFFFFFFF};
+    for (int i = 0; i < 10; i++) {
+        uint32_t n = tests[i];
+        uint32_t r = black_box(n);
+        printf("f(0x%08X) = 0x%08X  (%u)\\n", n, r, r);
+    }
+
+    printf("\\n=== Distribution check (is it a hash?) ===\\n");
+    // A good hash distributes bits evenly
+    uint32_t set_bits_in = 0, set_bits_out = 0;
+    for (int i = 0; i < 1000; i++) {
+        uint32_t r = black_box(i);
+        for (int b = 0; b < 32; b++) {
+            set_bits_in  += (i >> b) & 1;
+            set_bits_out += (r >> b) & 1;
+        }
+    }
+    printf("avg bits set in input:  %.2f / 32\\n", set_bits_in / 1000.0);
+    printf("avg bits set in output: %.2f / 32\\n", set_bits_out / 1000.0);
+
+    printf("\\n=== Double application ===\\n");
+    for (int i = 0; i < 5; i++) {
+        uint32_t r1 = black_box(i);
+        uint32_t r2 = black_box(r1);
+        printf("f(f(%d)) = %u\\n", i, r2);
+    }
+
+    // TODO: implement my_version() and verify it matches black_box()
+    printf("\\n=== Your implementation vs black_box ===\\n");
+    int correct = 1;
+    for (int i = 0; i < 10; i++) {
+        uint32_t n = tests[i];
+        if (my_version(n) != black_box(n)) {
+            printf("MISMATCH at n=%u: got %u, expected %u\\n",
+                   n, my_version(n), black_box(n));
+            correct = 0;
+        }
+    }
+    if (correct) printf("All match!\\n");
+    return 0;
+}` },
+
+      r05: {
+        name: 'RE-05: Anti-Debug Bypass', code: `#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+// Program detects debugging via two methods:
+// 1. Timing: if single-step takes too long → GDB
+// 2. Env var: if LD_PRELOAD is set → ltrace/hook
+// When detected, it outputs garbage instead of the flag.
+
+// Simulating what the real binary would do:
+int is_being_debugged() {
+    // Method 1: timing check
+    struct timespec t1, t2;
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    volatile int x = 0;
+    for (int i = 0; i < 1000000; i++) x += i;  // tight loop
+    clock_gettime(CLOCK_MONOTONIC, &t2);
+    long ns = (t2.tv_sec - t1.tv_sec) * 1000000000L + (t2.tv_nsec - t1.tv_nsec);
+    if (ns > 50000000L) return 1;  // > 50ms = too slow = debugger
+
+    // Method 2: environment check
+    if (getenv("LD_PRELOAD") != NULL) return 2;
+
+    return 0;
+}
+
+void output_flag(int debug_detected) {
+    const char real_flag[] = "flag{y0u_bypassed_antidebug}";
+    const char fake_flag[] = "flag{nope_try_again_lol}";
+    const char *f = debug_detected ? fake_flag : real_flag;
+    printf("Flag: %s\\n", f);
+}
+
+int main() {
+    printf("=== Anti-debug demonstration ===\\n");
+
+    int detected = is_being_debugged();
+    printf("Debug detected: %d\\n", detected);
+    output_flag(detected);
+
+    printf("\\n=== Bypass techniques ===\\n");
+
+    // Technique 1: patch the timing check
+    // In GDB: 'set $rax = 0' right after the call to is_being_debugged
+    // → forces "not detected" branch
+    printf("GDB patch: set return value to 0 after call\\n");
+
+    // Technique 2: NOP out the check
+    // Find the 'test eax,eax / jnz .detected' and NOP the jnz
+    printf("Binary patch: NOP out the conditional jump\\n");
+
+    // Technique 3: write a wrapper that calls the real function
+    // but replaces the return value
+    printf("\\nSimulating bypass by forcing detected=0:\\n");
+    output_flag(0);  // what you get when you bypass the check
+
+    // Technique 4: environment strip
+    // unsetenv("LD_PRELOAD") before calling the check
+    printf("\\nAfter unsetenv(LD_PRELOAD):\\n");
+    unsetenv("LD_PRELOAD");
+    printf("LD_PRELOAD is now: %s\\n", getenv("LD_PRELOAD") ? getenv("LD_PRELOAD") : "(null)");
+
+    // TODO: write a function that always extracts the real flag
+    // regardless of what is_being_debugged() returns.
+    // Hint: you can call output_flag directly with the right argument.
+    printf("\\nYour task: always get the real flag below:\\n");
+    // your code here
+
+    return 0;
+}` },
+
+      r06: {
+        name: 'RE-06: Custom Crypto', code: `#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+// A binary encrypts a flag with a custom cipher.
+// You have the encrypted output. Reverse the cipher.
+
+// The cipher (you must reverse-engineer the decryptor from this encryptor):
+void encrypt(const uint8_t *in, uint8_t *out, int len, uint32_t key) {
+    uint32_t state = key;
+    for (int i = 0; i < len; i++) {
+        // LCG: next state
+        state = state * 1664525 + 1013904223;
+        // XOR byte with high byte of state, then rotate left by (i%8+1)
+        uint8_t k = (state >> 24) & 0xFF;
+        uint8_t b = in[i] ^ k;
+        int rot = (i % 8) + 1;
+        b = (b << rot) | (b >> (8 - rot));
+        out[i] = b;
+    }
+}
+
+// Encrypted flag (this is what you'd get from the binary):
+static uint8_t encrypted[] = {
+    0x5A, 0xB4, 0xCA, 0x22, 0x7F, 0x96, 0xCC, 0xB5,
+    0x90, 0x11, 0xCB, 0x5E, 0xAF, 0xF7, 0x58, 0xB6,
+    0x44, 0x13, 0x86, 0xF0, 0x4D, 0xF5, 0xA7, 0x3C,
+    0x21, 0xD9, 0x4E, 0x2B
+};
+// Key is 0xDEADC0DE (you'd find this in the binary)
+static uint32_t KEY = 0xDEADC0DE;
+static int LEN = 28;
+
+// YOUR TASK: write decrypt() that reverses encrypt()
+void decrypt(const uint8_t *in, uint8_t *out, int len, uint32_t key) {
+    uint32_t state = key;
+    for (int i = 0; i < len; i++) {
+        state = state * 1664525 + 1013904223;
+        uint8_t k = (state >> 24) & 0xFF;
+        uint8_t b = in[i];
+        
+        // TODO: reverse the rotate-left by (i%8+1)
+        // rotate-left by N → rotate-right by N to undo
+        int rot = (i % 8) + 1;
+        b = (b >> rot) | (b << (8 - rot));  // rotate right
+        
+        // TODO: reverse the XOR
+        b = b ^ k;
+        
+        out[i] = b;
+    }
+}
+
+int main() {
+    uint8_t plaintext[64] = {0};
+    uint8_t ciphertext[64] = {0};
+
+    // Verify: encrypt a known string and show the output
+    const char *known = "flag{test_message_here!!!!!}";
+    printf("Known plaintext:  %s\\n", known);
+    encrypt((uint8_t*)known, ciphertext, strlen(known), KEY);
+    printf("Encrypted (hex):  ");
+    for (int i = 0; i < (int)strlen(known); i++) printf("%02X ", ciphertext[i]);
+    printf("\\n");
+
+    // Now decrypt the challenge ciphertext
+    printf("\\nChallenge cipher: ");
+    for (int i = 0; i < LEN; i++) printf("%02X ", encrypted[i]);
+    printf("\\n");
+
+    decrypt(encrypted, plaintext, LEN, KEY);
+    plaintext[LEN] = 0;
+    printf("Decrypted flag:   %s\\n", (char*)plaintext);
+
+    // Verify round-trip
+    printf("\\nRound-trip test:\\n");
+    char orig[] = "flag{custom_cipher_cracked!}";
+    uint8_t enc[64], dec[64];
+    encrypt((uint8_t*)orig, enc, strlen(orig), KEY);
+    decrypt(enc, dec, strlen(orig), KEY);
+    dec[strlen(orig)] = 0;
+    printf("Original:  %s\\n", orig);
+    printf("Recovered: %s\\n", (char*)dec);
+    printf("Match: %s\\n", strcmp(orig, (char*)dec) == 0 ? "YES" : "NO");
+
+    return 0;
+}` }
+    };
+  </script>
+</body>
+
+</html>

